@@ -1,35 +1,39 @@
 const User = require('../models/User');
 const Photo = require('../models/Photo');
 const UnlockedPhoto = require('../models/UnlockedPhoto');
-// const aws = require('aws-sdk');
 const multer = require('multer');
-const multerS3 = require('multer-s3');
 const path = require('path');
+const fs = require('fs');
 const sharp = require('sharp');
 
-// Configure AWS
-aws.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION
-});
+// Create upload directories if they don't exist
+const uploadDir = path.join(__dirname, '../../uploads');
+const photosDir = path.join(uploadDir, 'photos');
+const blurredDir = path.join(uploadDir, 'blurred');
 
-const s3 = new aws.S3();
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+if (!fs.existsSync(photosDir)) {
+  fs.mkdirSync(photosDir);
+}
+if (!fs.existsSync(blurredDir)) {
+  fs.mkdirSync(blurredDir);
+}
 
 // Set up multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, photosDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
 const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: process.env.AWS_S3_BUCKET,
-    acl: 'private',
-    metadata: function (req, file, cb) {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, 'photos/' + uniqueSuffix + path.extname(file.originalname));
-    }
-  }),
+  storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: function (req, file, cb) {
     // Accept only images
@@ -41,36 +45,19 @@ const upload = multer({
 });
 
 // Helper function to create a blurred version of an image
-const createBlurredImage = async (s3Key) => {
+const createBlurredImage = async (originalFilePath) => {
   try {
-    // Get the original image from S3
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: s3Key
-    };
-    
-    const data = await s3.getObject(params).promise();
+    const filename = path.basename(originalFilePath);
+    const blurredFilePath = path.join(blurredDir, filename);
     
     // Create a blurred version
-    const blurredBuffer = await sharp(data.Body)
+    await sharp(originalFilePath)
       .blur(15) // Adjust blur amount as needed
-      .toBuffer();
-    
-    // Upload the blurred version to S3
-    const blurredKey = 'blurred/' + path.basename(s3Key);
-    const uploadParams = {
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: blurredKey,
-      Body: blurredBuffer,
-      ContentType: data.ContentType,
-      ACL: 'private'
-    };
-    
-    const uploadResult = await s3.upload(uploadParams).promise();
+      .toFile(blurredFilePath);
     
     return {
-      key: blurredKey,
-      url: uploadResult.Location
+      path: blurredFilePath,
+      filename: filename
     };
   } catch (error) {
     console.error('Error creating blurred image:', error);
@@ -101,17 +88,17 @@ exports.uploadPhoto = async (req, res, next) => {
       
       try {
         // Create blurred version
-        const blurred = await createBlurredImage(req.file.key);
+        const blurred = await createBlurredImage(req.file.path);
         
         // Create photo record
         const photo = await Photo.create({
           userId: req.user.id,
           title: req.body.title || '',
           description: req.body.description || '',
-          s3Key: req.file.key,
-          s3Url: req.file.location,
-          blurredS3Key: blurred.key,
-          blurredS3Url: blurred.url,
+          s3Key: req.file.filename,
+          s3Url: `/uploads/photos/${req.file.filename}`,
+          blurredS3Key: blurred.filename,
+          blurredS3Url: `/uploads/blurred/${blurred.filename}`,
           isLocked: req.body.isLocked !== 'false', // Default to true
           price: req.body.price || 25,
           isActive: req.body.isActive !== 'false' // Default to true
@@ -123,10 +110,9 @@ exports.uploadPhoto = async (req, res, next) => {
         });
       } catch (error) {
         // If there's an error, delete the uploaded file
-        await s3.deleteObject({
-          Bucket: process.env.AWS_S3_BUCKET,
-          Key: req.file.key
-        }).promise();
+        if (req.file && req.file.path) {
+          fs.unlinkSync(req.file.path);
+        }
         
         next(error);
       }
@@ -313,17 +299,17 @@ exports.deletePhoto = async (req, res, next) => {
       });
     }
     
-    // Delete from S3
-    await s3.deleteObject({
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: photo.s3Key
-    }).promise();
+    // Delete from local storage
+    const originalFilePath = path.join(photosDir, photo.s3Key);
+    const blurredFilePath = path.join(blurredDir, photo.blurredS3Key);
     
-    // Delete blurred version
-    await s3.deleteObject({
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: photo.blurredS3Key
-    }).promise();
+    if (fs.existsSync(originalFilePath)) {
+      fs.unlinkSync(originalFilePath);
+    }
+    
+    if (fs.existsSync(blurredFilePath)) {
+      fs.unlinkSync(blurredFilePath);
+    }
     
     // Delete from database
     await photo.remove();
