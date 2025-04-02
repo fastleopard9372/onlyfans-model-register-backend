@@ -1,0 +1,8 @@
+node_modules
+.env
+uploads/
+blurred/
+photos/
+original/
+node_modules/
+public/

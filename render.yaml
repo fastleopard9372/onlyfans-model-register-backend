@@ -1,0 +1,10 @@
+# Deployment Configuration for Render.com
+
+# Build Command
+build = "npm install"
+
+# Start Command
+start = "npm start"
+
+# Node.js Version
+nodeVersion = "18.x"
