@@ -95,10 +95,10 @@ exports.uploadPhoto = async (req, res, next) => {
           userId: req.user.id,
           title: req.body.title || '',
           description: req.body.description || '',
-          s3Key: req.file.filename,
-          s3Url: `/uploads/photos/${req.file.filename}`,
-          blurredS3Key: blurred.filename,
-          blurredS3Url: `/uploads/blurred/${blurred.filename}`,
+          filename: req.file.filename,
+          fileUrl: `/uploads/photos/${req.file.filename}`,
+          blurredFilename: blurred.filename,
+          blurredFileUrl: `/uploads/blurred/${blurred.filename}`,
           isLocked: req.body.isLocked !== 'false', // Default to true
           price: req.body.price || 25,
           isActive: req.body.isActive !== 'false' // Default to true
@@ -155,9 +155,9 @@ exports.getPhotos = async (req, res, next) => {
       
       // If photo is locked and not unlocked for this user, return blurred URL
       if (photoObj.isLocked && !photoObj.isUnlocked) {
-        photoObj.displayUrl = photoObj.blurredS3Url;
+        photoObj.displayUrl = photoObj.blurredFileUrl;
       } else {
-        photoObj.displayUrl = photoObj.s3Url;
+        photoObj.displayUrl = photoObj.fileUrl;
       }
       
       return photoObj;
@@ -213,9 +213,9 @@ exports.getPhoto = async (req, res, next) => {
     
     // If photo is locked and not unlocked for this user, return blurred URL
     if (photoObj.isLocked && !photoObj.isUnlocked) {
-      photoObj.displayUrl = photoObj.blurredS3Url;
+      photoObj.displayUrl = photoObj.blurredFileUrl;
     } else {
-      photoObj.displayUrl = photoObj.s3Url;
+      photoObj.displayUrl = photoObj.fileUrl;
     }
     
     res.status(200).json({
@@ -300,8 +300,8 @@ exports.deletePhoto = async (req, res, next) => {
     }
     
     // Delete from local storage
-    const originalFilePath = path.join(photosDir, photo.s3Key);
-    const blurredFilePath = path.join(blurredDir, photo.blurredS3Key);
+    const originalFilePath = path.join(photosDir, photo.filename);
+    const blurredFilePath = path.join(blurredDir, photo.blurredFilename);
     
     if (fs.existsSync(originalFilePath)) {
       fs.unlinkSync(originalFilePath);
@@ -371,9 +371,9 @@ exports.getUserPhotos = async (req, res, next) => {
       
       // If photo is locked and not unlocked for this user, return blurred URL
       if (photoObj.isLocked && !photoObj.isUnlocked) {
-        photoObj.displayUrl = photoObj.blurredS3Url;
+        photoObj.displayUrl = photoObj.blurredFileUrl;
       } else {
-        photoObj.displayUrl = photoObj.s3Url;
+        photoObj.displayUrl = photoObj.fileUrl;
       }
       
       return photoObj;

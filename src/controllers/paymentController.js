@@ -4,6 +4,61 @@ const Photo = require('../models/Photo');
 const UnlockedPhoto = require('../models/UnlockedPhoto');
 const User = require('../models/User');
 
+exports.createPaymentIntent = async (req, res, next) => {
+  try {
+    const { email, amount, donorType } = req.body;
+    const donation_find = await Donation.findOne({
+      donorEmail: email,
+      status: 'succeeded',
+      donorType: donorType
+    });
+    let donationId = -1
+    if (donation_find) { 
+      donationId = donation_find._id
+      return res.json({ clientSecret:donation_find.stripePaymentId, donationId: donation_find._id });
+    }
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100, // Convert to cents
+      currency: "usd",
+      metadata: { email },
+    });
+    const donation = new Donation({
+      donorEmail: email,
+      amount:amount,
+      donorType: donorType,
+      stripePaymentId: paymentIntent.id,
+      status: "pending",
+    })
+    
+    await donation.save();
+    return res.json({ clientSecret: paymentIntent.client_secret, donationId: donation._id });
+  } catch (error) {
+    next(error);
+  }
+}
+
+exports.createPaymentComplete  = async (req, res, next) => {
+  try {
+    const { donationId, paymentIntent } = req.body;
+    const donation = await Donation.findById(donationId);
+    if (!donation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Donation not found'
+      });
+    }
+    donation.stripePaymentId = paymentIntent.id;
+    donation.status = paymentIntent.status;
+    await donation.save();
+    return res.json({
+      success: true,
+      donation
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // @desc    Create payment session for photo unlock
 // @route   POST /api/payments/photo/:photoId
 // @access  Public

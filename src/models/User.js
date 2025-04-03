@@ -4,47 +4,66 @@ const bcrypt = require('bcryptjs');
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Name is required'],
+    required: [true, 'Please add a name'],
+    trim: true
+  },
+  username: {
+    type: String,
+    required: [true, 'Please add a username'],
+    unique: true,
     trim: true
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: [true, 'Please add an email'],
     unique: true,
-    trim: true,
-    lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
+    match: [
+      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+      'Please add a valid email'
+    ]
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters']
+    required: [true, 'Please add a password'],
+    minlength: 6,
+    select: false
   },
-  siteAddress: {
+  role: {
     type: String,
-    trim: true
+    enum: ['user', 'model', 'admin'],
+    default: 'model'
   },
   profilePhoto: {
     url: String,
-    key: String
+    filename: String
+  },
+  websiteUrl: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  bio: {
+    type: String,
+    maxlength: [500, 'Bio cannot be more than 500 characters']
+  },
+  quote: {
+    type: String,
+    maxlength: [500, 'Quote cannot be more than 500 characters']
   },
   isActive: {
     type: Boolean,
     default: true
   },
-  role: {
-    type: String,
-    enum: ['model', 'admin'],
-    default: 'model'
+  donationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Donation'
   },
   invitedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  invitationsSent: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Invitation'
-  }]
+  resetPasswordToken: String,
+  resetPasswordExpire: Date
 }, {
   timestamps: true
 });

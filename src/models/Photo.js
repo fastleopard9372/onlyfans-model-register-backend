@@ -14,29 +14,25 @@ const PhotoSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  s3Key: {
+  filename: {
     type: String,
     required: true
   },
-  s3Url: {
+  fileUrl: {
     type: String,
     required: true
   },
-  blurredS3Key: {
+  blurredFilename: {
     type: String,
     required: true
   },
-  blurredS3Url: {
+  blurredFileUrl: {
     type: String,
     required: true
   },
   isLocked: {
     type: Boolean,
     default: true
-  },
-  price: {
-    type: Number,
-    default: 25
   },
   isActive: {
     type: Boolean,

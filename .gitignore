@@ -1,3 +1,4 @@
+.env
 node_modules
 uploads/
 blurred/
@@ -5,7 +6,6 @@ photos/
 original/
 node_modules/w
 public/
-.env
 .env.local
 .env.development.local
 .env.test.local

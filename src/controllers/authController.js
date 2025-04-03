@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Invitation = require('../models/Invitation');
+const Donation = require('../models/Donation');
 const crypto = require('crypto');
 
 // Generate JWT token
@@ -10,13 +11,32 @@ const generateToken = (id) => {
   });
 };
 
+const generateInvitationKey = ({ code, email }) => {
+  // Generate a JWT token containing the invitation code and email
+  return jwt.sign(
+    { code, email },
+    process.env.JWT_SECRET,
+    { expiresIn: '0' }
+  );
+}
+
+const getInvitationKey = (invitation_code) => {
+  return jwt.verify(invitation_code, process.env.JWT_SECRET);
+}
+
 // @desc    Register a new model
 // @route   POST /api/auth/register
 // @access  Public (with invitation code)
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, siteAddress, invitationCode } = req.body;
-
+    const { username, email, invitationCode, donationId } = req.body;
+    
+    if (donationId == "-1") {
+      return res.status(400).json({
+        success: false,
+        message: "Donation ID is not valid"
+      });
+    }
     // Validate invitation code
     const invitation = await Invitation.findOne({ 
       code: invitationCode,
@@ -33,20 +53,23 @@ exports.register = async (req, res, next) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
       return res.status(400).json({
         success: false,
         message: 'Email already registered'
       });
     }
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username already registered'
+      });
+    }
 
     // Create new user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      siteAddress,
+    const user = await User.create({ ...req.body,
       invitedBy: invitation.senderId
     });
 
@@ -60,6 +83,48 @@ exports.register = async (req, res, next) => {
     res.status(201).json({
       success: true,
       token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        websiteUrl: user.websiteUrl,
+        profilePhoto: user.profilePhoto,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// @desc    Register a new model
+// @route   POST /api/auth/admin_register
+// @access  Public (with invitation code)
+exports.admin_register = async (req, res, next) => {
+  try {
+    const { name, email, password, siteAddress} = req.body;
+    // Check if user already exists
+    const existingUser = await User.findOne({ role: 'admin', email  });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already registered'
+      });
+    }
+
+    // Create new user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      siteAddress,
+      role:'admin'
+    });
+
+    res.status(201).json({
+      success: true,
       user: {
         id: user._id,
         name: user.name,
@@ -116,7 +181,8 @@ exports.login = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        siteAddress: user.siteAddress,
+        username: user.username,
+        websiteUrl: user.websiteUrl,
         profilePhoto: user.profilePhoto,
         role: user.role
       }
@@ -164,17 +230,27 @@ exports.generateInvitation = async (req, res, next) => {
       });
     }
 
-    // Check if user has already sent 3 invitations
-    const invitationCount = await Invitation.countDocuments({ 
-      senderId: req.user.id,
-      status: { $in: ['pending', 'accepted'] }
-    });
-
-    if (invitationCount >= 3) {
+    //if email is my email check
+    if (email === req.user.email) {
       return res.status(400).json({
         success: false,
-        message: 'You have already sent the maximum number of invitations (3)'
+        message: 'You cannot send an invitation to yourself'
       });
+    }
+
+    // Check if user has already sent 3 invitations
+    if (req.user.role != "admin") { 
+      const invitationCount = await Invitation.countDocuments({ 
+        senderId: req.user.id,
+        status: { $in: ['pending', 'accepted'] }
+      });
+      
+      if (invitationCount >= 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'You have already sent the maximum number of invitations (3)'
+        });
+      }
     }
 
     // Check if email already has a pending invitation
@@ -220,3 +296,68 @@ exports.generateInvitation = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Check invitation code validity and email match
+// @route   GET /api/auth/check_invitation
+// @access  Public
+exports.checkInvitation = async (req, res, next) => {
+  try {
+
+    const { code, email } = req.params
+    // const invitation_code = req.query.code;
+    // if (!invitation_code || typeof invitation_code !== 'string') {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: 'Invalid Invitation Code format'
+    //   });
+    // }
+    // const {code, email} = getInvitationKey(invitation_code)
+
+    // Find invitation by code and email
+    const invitation = await Invitation.findOne({
+      code,
+      email,
+    });
+    
+    if (!invitation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired invitation code, or email does not match'
+      });
+    }
+    // Check if invitation is still pending
+    if (invitation.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'This invitation has already been used'
+      });
+    }
+
+    // Check if invitation has expired
+    if (invitation.expiresAt < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: 'This invitation has expired'
+      });
+    }
+
+    const donation = await Donation.findOne({
+      donorEmail: email,
+      status: 'succeeded',
+      donorType: 'model'
+    });
+    let donationId = -1
+    if (donation) { 
+      donationId= donation._id
+    }
+
+    res.status(200).json({
+      success: true,
+      invitation,
+      donationId
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

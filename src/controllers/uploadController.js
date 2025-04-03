@@ -1,8 +1,48 @@
-const { upload, getSignedUrl } = require('../utils/s3Upload');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const User = require('../models/User');
 const Photo = require('../models/Photo');
 
-// @desc    Upload a file to S3
+// Create upload directories if they don't exist
+const uploadDir = path.join(__dirname, '../../uploads');
+const photosDir = path.join(uploadDir, 'photos');
+const blurredDir = path.join(uploadDir, 'blurred');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+if (!fs.existsSync(photosDir)) {
+  fs.mkdirSync(photosDir);
+}
+if (!fs.existsSync(blurredDir)) {
+  fs.mkdirSync(blurredDir);
+}
+
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, photosDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: function (req, file, cb) {
+    // Accept only images
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+      return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+  }
+});
+
+// @desc    Upload a file
 // @route   POST /api/upload
 // @access  Private
 exports.uploadFile = (req, res, next) => {
@@ -23,29 +63,12 @@ exports.uploadFile = (req, res, next) => {
     }
 
     try {
-      // Get the transforms from multer-s3-transform
-      const original = req.file.transforms.find(t => t.id === 'original');
-      const blurred = req.file.transforms.find(t => t.id === 'blurred');
-
-      if (!original || !blurred) {
-        return res.status(500).json({
-          success: false,
-          message: 'Error processing image transforms'
-        });
-      }
-
-      // Generate signed URLs for the uploaded files
-      const originalUrl = getSignedUrl(original.key);
-      const blurredUrl = getSignedUrl(blurred.key);
-
       // Return the file information
       res.status(200).json({
         success: true,
         file: {
-          originalKey: original.key,
-          originalUrl,
-          blurredKey: blurred.key,
-          blurredUrl
+          filename: req.file.filename,
+          fileUrl: `/uploads/photos/${req.file.filename}`
         }
       });
     } catch (error) {
@@ -75,24 +98,11 @@ exports.updateProfilePhoto = (req, res, next) => {
     }
 
     try {
-      // Get the original transform
-      const original = req.file.transforms.find(t => t.id === 'original');
-
-      if (!original) {
-        return res.status(500).json({
-          success: false,
-          message: 'Error processing image transform'
-        });
-      }
-
-      // Generate signed URL for the uploaded file
-      const url = getSignedUrl(original.key);
-
       // Update user profile photo
       await User.findByIdAndUpdate(req.user.id, {
         profilePhoto: {
-          url,
-          key: original.key
+          url: `/uploads/photos/${req.file.filename}`,
+          filename: req.file.filename
         }
       });
 
@@ -100,8 +110,8 @@ exports.updateProfilePhoto = (req, res, next) => {
       res.status(200).json({
         success: true,
         profilePhoto: {
-          url,
-          key: original.key
+          url: `/uploads/photos/${req.file.filename}`,
+          filename: req.file.filename
         }
       });
     } catch (error) {
