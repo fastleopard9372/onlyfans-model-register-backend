@@ -88,9 +88,12 @@ exports.register = async (req, res, next) => {
         name: user.name,
         email: user.email,
         username: user.username,
+        role: user.role,
+        bio: user.bio,
+        quote: user.quote,
         websiteUrl: user.websiteUrl,
-        profilePhoto: user.profilePhoto,
-        role: user.role
+        donationId: user.donationId,
+        profilePhoto: user.profilePhoto
       }
     });
   } catch (error) {
@@ -173,18 +176,22 @@ exports.login = async (req, res, next) => {
 
     // Generate token
     const token = generateToken(user._id);
-
+    
     res.status(200).json({
       success: true,
       token,
+      message: 'Login successful',
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         username: user.username,
+        role: user.role,
+        bio: user.bio,
+        quote: user.quote,
         websiteUrl: user.websiteUrl,
         profilePhoto: user.profilePhoto,
-        role: user.role
+        donationId: user.donationId
       }
     });
   } catch (error) {
@@ -192,6 +199,68 @@ exports.login = async (req, res, next) => {
   }
 };
 
+// @desc    Update user password
+// @route   PUT /api/auth/update_password
+// @access  Private
+exports.updatePassword = async (req, res, next) => {
+  try {
+    const { password, confirm_password } = req.body;
+    const user = await User.findById(req.user.id);
+    if (password !== confirm_password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match'
+      });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+    user.password = password;
+    await user.save();
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// @desc    Update user profile
+// @route   PUT /api/auth/update_profile
+// @access  Private
+exports.updateProfile = async (req, res, next) => {
+  try { 
+    const user = await User.findById(req.user.id);
+    user.name = req.body.name;
+    // user.email = req.body.email;
+    user.websiteUrl = req.body.websiteUrl;
+    user.bio = req.body.bio;
+    user.quote = req.body.quote;
+    await user.save();
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        websiteUrl: user.websiteUrl,
+        role: user.role,
+        bio: user.bio,
+        quote: user.quote,
+        profilePhoto: user.profilePhoto,
+        donationId: user.donationId
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 // @desc    Get current logged in user
 // @route   GET /api/auth/me
 // @access  Private
@@ -221,6 +290,15 @@ exports.getMe = async (req, res, next) => {
 exports.generateInvitation = async (req, res, next) => {
   try {
     const { email } = req.body;
+    const id = req.user.id;
+    // Check if id exists and is valid
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide your email address'
+      });
+    }
+  
 
     // Validate email
     if (!email) {
@@ -274,23 +352,34 @@ exports.generateInvitation = async (req, res, next) => {
     const invitation = await Invitation.create({
       code,
       email,
-      senderId: req.user.id,
+      senderId: id,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
     });
 
     // Update user's invitationsSent array
-    await User.findByIdAndUpdate(req.user.id, {
+    await User.findByIdAndUpdate(id, {
       $push: { invitationsSent: invitation._id }
     });
 
     res.status(201).json({
       success: true,
-      invitation: {
-        id: invitation._id,
-        code: invitation.code,
-        email: invitation.email,
-        expiresAt: invitation.expiresAt
-      }
+      invitation: invitation,
+      message: 'Invitation sent successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get invitations
+// @route   Post /api/auth/invitations/:id
+// @access  Private
+exports.getInvitations = async (req, res, next) => {
+  try {
+    const invitations = await Invitation.find({ senderId: req.user.id });
+    res.status(200).json({
+      success: true,
+      invitations
     });
   } catch (error) {
     next(error);

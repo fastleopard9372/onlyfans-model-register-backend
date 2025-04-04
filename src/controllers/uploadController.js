@@ -32,10 +32,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: function (req, file, cb) {
-    // Accept only images
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+    // Accept all image types
+    const mimeType = file.mimetype.split('/')[0];
+    if (mimeType !== 'image') {
       return cb(new Error('Only image files are allowed!'), false);
     }
     cb(null, true);
@@ -80,7 +81,8 @@ exports.uploadFile = (req, res, next) => {
 // @desc    Update user profile photo
 // @route   POST /api/upload/profile
 // @access  Private
-exports.updateProfilePhoto = (req, res, next) => {
+exports.updatePicture = (req, res, next) => {
+  
   // Use the upload middleware
   upload.single('file')(req, res, async (err) => {
     if (err) {
@@ -119,3 +121,30 @@ exports.updateProfilePhoto = (req, res, next) => {
     }
   });
 };
+
+exports.getPicture = (req, res, next) => {
+  try { 
+    const { photos, file } = req.params;
+    const filePath = path.join(__dirname, '..', '..', 'uploads', photos, file);
+    res.sendFile(filePath);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deletePicture = async (req, res, next) => {
+  try {
+    const {photos, file} = req.params;
+    const filePath = path.join(__dirname, '..', '..', 'uploads',photos, file);
+    fs.unlinkSync(filePath);
+    await User.findByIdAndUpdate(req.user.id, {
+      profilePhoto: null
+    });
+    res.status(200).json({
+      success: true,
+      message: 'Picture deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
