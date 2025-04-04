@@ -8,12 +8,14 @@ const {
   updatePhoto,
   deletePhoto,
   getUserPhotos,
-  getMyPhotos
+  getMyPhotos,
+  getPhotoBlob
 } = require('../controllers/photoController');
 
 // Public routes
 router.get('/', getPhotos);
 router.get('/:id', getPhoto);
+router.get('/blob/uploads/:photos/:file', getPhotoBlob);
 router.get('/user/:userId', getUserPhotos);
 
 // Protected routes

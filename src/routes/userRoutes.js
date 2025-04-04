@@ -11,6 +11,10 @@ const {
   updateProfile
 } = require('../controllers/userController');
 
+
+router.route('/:id')
+  .get(getUser)
+  
 router.use(protect);
 
 // Get current user profile

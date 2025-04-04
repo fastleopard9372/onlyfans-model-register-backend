@@ -4,9 +4,10 @@ const Photo = require('../models/Photo');
 const UnlockedPhoto = require('../models/UnlockedPhoto');
 const User = require('../models/User');
 
-exports.createPaymentIntent = async (req, res, next) => {
+exports.createSignupPaymentIntent = async (req, res, next) => {
   try {
-    const { email, amount, donorType } = req.body;
+    const { email, donorType } = req.body;
+    const amount = 25
     const donation_find = await Donation.findOne({
       donorEmail: email,
       status: 'succeeded',
@@ -37,7 +38,43 @@ exports.createPaymentIntent = async (req, res, next) => {
   }
 }
 
-exports.createPaymentComplete  = async (req, res, next) => {
+exports.createPhotoPaymentIntent = async (req, res, next) => {
+  try {
+    const { email, donorType, modelId } = req.body;
+    const amount = 25
+    const donation_find = await Donation.findOne({
+      donorEmail: email,
+      status: 'succeeded',
+      donorType: donorType,
+      modelId: modelId
+    }); 
+    let donationId = -1
+    if (donation_find) { 
+      donationId = donation_find._id
+      return res.json({ clientSecret:donation_find.stripePaymentId, donationId: donation_find._id });
+    }
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100, // Convert to cents
+      currency: "usd",
+      metadata: { email, modelId },
+    }); 
+    const donation = new Donation({
+      donorEmail: email,
+      amount:amount,
+      donorType: donorType,
+      stripePaymentId: paymentIntent.id,
+      status: "pending",
+      modelId: modelId
+    })
+    
+    await donation.save();
+    return res.json({ clientSecret: paymentIntent.client_secret, donationId: donation._id });
+  } catch (error) {
+    next(error);
+  }
+}
+
+exports.createSignupPaymentComplete  = async (req, res, next) => {
   try {
     const { donationId, paymentIntent } = req.body;
     const donation = await Donation.findById(donationId);
@@ -52,6 +89,77 @@ exports.createPaymentComplete  = async (req, res, next) => {
     await donation.save();
     return res.json({
       success: true,
+      message: 'Payment complete',
+      donation
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+
+exports.createPhotoPaymentComplete = async (req, res, next) => {
+  try {
+    const { donationId, paymentIntent } = req.body;
+    const donation = await Donation.findById(donationId);
+    if (!donation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Donation not found'
+      });
+    }
+    donation.stripePaymentId = paymentIntent.id;
+    donation.status = paymentIntent.status;
+    await donation.save();
+
+    const unlockedPhoto = new UnlockedPhoto({
+      modelId: donation.modelId,
+      donorEmail: donation.donorEmail,
+      donationId: donation._id
+    })
+    await unlockedPhoto.save();
+
+    return res.json({
+      success: true,
+      message: 'Payment complete',
+      unlockedPhoto,
+      donation
+    });
+  } catch (error) {
+    next(error);
+  }
+} 
+
+exports.checkPhotoPayment = async (req, res, next) => {
+  try {
+    const { email, modelId } = req.body;
+    const donation = await Donation.findOne({
+      donorEmail: email,
+      modelId: modelId,
+      status: 'succeeded',
+      donorType: 'visitor',
+    });
+    if (!donation) {
+      return res.json({
+        success: false,
+        message: 'Payment not found'
+      });
+    }
+    const unlockedPhoto = await UnlockedPhoto.findOne({
+      modelId: modelId,
+      donorEmail: email,
+      donationId: donation._id
+    });
+    if (!unlockedPhoto) {
+      return res.json({
+        success: false,
+        message: 'Photo not unlocked'
+      });
+    }
+    return res.json({
+      success: true,
+      unlockedPhoto,
       donation
     });
   } catch (error) {
@@ -208,6 +316,8 @@ exports.createSignupPayment = async (req, res, next) => {
     next(error);
   }
 };
+
+
 
 // @desc    Webhook for Stripe events
 // @route   POST /api/payments/webhook

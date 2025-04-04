@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const UnlockedPhotoSchema = new mongoose.Schema({
-  photoId: {
+  modelId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Photo',
+    ref: 'User',
     required: true
   },
   donorEmail: {

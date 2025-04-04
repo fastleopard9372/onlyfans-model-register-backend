@@ -22,9 +22,9 @@ const DonationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  photoId: {
+  modelId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Photo'
+    ref: 'User'
   },
   status: {
     type: String,

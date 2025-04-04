@@ -127,41 +127,48 @@ exports.uploadPhoto = async (req, res, next) => {
 // @access  Public
 exports.getPhotos = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 16;
+    const page = parseInt(req.query.page, 8) || 1;
+    const limit = parseInt(req.query.limit, 8) || 16;
+    const q = req.query.q || '';
     const startIndex = (page - 1) * limit;
-    
-    const photos = await Photo.find({ isActive: true })
-      .populate('userId', 'name profilePhoto')
-      .sort({ createdAt: -1 })
+    // Find users who have a profile photo
+    const photos = await User.find({ 
+      'profilePhoto.url': { $exists: true, $ne: null },
+      $or: [
+        { username: { $regex: q, $options: 'i' } },
+        { name: { $regex: q, $options: 'i' } }
+      ]
+    }, 'profilePhoto _id username name').sort({ createdAt: -1 })
       .skip(startIndex)
       .limit(limit);
     
-    const total = await Photo.countDocuments({ isActive: true });
+    const total = await User.countDocuments({ 
+      'profilePhoto.url': { $exists: true, $ne: null }
+    });
     
     // Check which photos are unlocked for the current user (if authenticated)
-    let unlockedPhotoIds = [];
-    if (req.user) {
-      const unlockedPhotos = await UnlockedPhoto.find({ 
-        donorEmail: req.user.email 
-      });
-      unlockedPhotoIds = unlockedPhotos.map(up => up.photoId.toString());
-    }
+    // let unlockedPhotoIds = [];
+    // if (req.user) {
+    //   const unlockedPhotos = await UnlockedPhoto.find({ 
+    //     donorEmail: req.user.email 
+    //   });
+    //   unlockedPhotoIds = unlockedPhotos.map(up => up.photoId.toString());
+    // }
     
-    // Transform photos to include whether they're unlocked for this user
-    const transformedPhotos = photos.map(photo => {
-      const photoObj = photo.toObject();
-      photoObj.isUnlocked = unlockedPhotoIds.includes(photo._id.toString());
+    // // Transform photos to include whether they're unlocked for this user
+    // const transformedPhotos = photos.map(photo => {
+    //   const photoObj = photo.toObject();
+    //   photoObj.isUnlocked = unlockedPhotoIds.includes(photo._id.toString());
       
-      // If photo is locked and not unlocked for this user, return blurred URL
-      if (photoObj.isLocked && !photoObj.isUnlocked) {
-        photoObj.displayUrl = photoObj.blurredFileUrl;
-      } else {
-        photoObj.displayUrl = photoObj.fileUrl;
-      }
+    //   // If photo is locked and not unlocked for this user, return blurred URL
+    //   if (photoObj.isLocked && !photoObj.isUnlocked) {
+    //     photoObj.displayUrl = photoObj.blurredFileUrl;
+    //   } else {
+    //     photoObj.displayUrl = photoObj.fileUrl;
+    //   }
       
-      return photoObj;
-    });
+    //   return photoObj;
+    // });
     
     res.status(200).json({
       success: true,
@@ -169,7 +176,7 @@ exports.getPhotos = async (req, res, next) => {
       total,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
-      photos: transformedPhotos
+      photos: photos
     });
   } catch (error) {
     next(error);
@@ -420,3 +427,14 @@ exports.getMyPhotos = async (req, res, next) => {
     next(error);
   }
 };
+
+
+exports.getPhotoBlob = async (req, res, next) => {
+  try {
+    const { photos, file } = req.params;
+    const filePath = path.join(__dirname, '..', '..', 'uploads', photos, file);
+    res.sendFile(filePath);
+  } catch (error) {
+    next(error);
+  }
+}

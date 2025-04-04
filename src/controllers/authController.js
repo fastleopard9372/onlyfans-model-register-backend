@@ -91,7 +91,7 @@ exports.register = async (req, res, next) => {
         role: user.role,
         bio: user.bio,
         quote: user.quote,
-        websiteUrl: user.websiteUrl,
+        siteAddress: user.siteAddress,
         donationId: user.donationId,
         profilePhoto: user.profilePhoto
       }
@@ -189,7 +189,7 @@ exports.login = async (req, res, next) => {
         role: user.role,
         bio: user.bio,
         quote: user.quote,
-        websiteUrl: user.websiteUrl,
+        siteAddress: user.siteAddress,
         profilePhoto: user.profilePhoto,
         donationId: user.donationId
       }
@@ -237,7 +237,7 @@ exports.updateProfile = async (req, res, next) => {
     const user = await User.findById(req.user.id);
     user.name = req.body.name;
     // user.email = req.body.email;
-    user.websiteUrl = req.body.websiteUrl;
+    user.siteAddress = req.body.siteAddress;
     user.bio = req.body.bio;
     user.quote = req.body.quote;
     await user.save();
@@ -249,7 +249,7 @@ exports.updateProfile = async (req, res, next) => {
         name: user.name,
         email: user.email,
         username: user.username,
-        websiteUrl: user.websiteUrl,
+        siteAddress: user.siteAddress,
         role: user.role,
         bio: user.bio,
         quote: user.quote,

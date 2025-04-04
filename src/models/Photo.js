@@ -18,7 +18,7 @@ const PhotoSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  fileUrl: {
+  url: {
     type: String,
     required: true
   },

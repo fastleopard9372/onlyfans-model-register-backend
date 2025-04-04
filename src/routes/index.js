@@ -4,4 +4,7 @@ exports.authRoutes = require('./authRoutes');
 exports.userRoutes = require('./userRoutes');
 exports.photoRoutes = require('./photoRoutes');
 exports.uploadRoutes = require('./uploadRoutes');
+exports.downloadRoutes = require('./downloadRoutes');
+
+  
 

@@ -11,7 +11,8 @@ const {
   donationRoutes,
   userRoutes,
   photoRoutes,
-  uploadRoutes
+  uploadRoutes,
+  downloadRoutes
 } = require('./routes');
 // Initialize express app
 const app = express();
@@ -33,9 +34,11 @@ app.use(helmet());
 app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/photo', photoRoutes);
+app.use('/api/photos', photoRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/donation', donationRoutes);
+app.use('/api/download/uploads', downloadRoutes);
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

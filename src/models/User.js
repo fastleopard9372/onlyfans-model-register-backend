@@ -37,7 +37,11 @@ const UserSchema = new mongoose.Schema({
     url: String,
     filename: String
   },
-  websiteUrl: {
+  lockedPhoto: {
+    url: String,
+    filename: String
+  },
+  siteAddress: {
     type: String,
     unique: true,
     sparse: true
