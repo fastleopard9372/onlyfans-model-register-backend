@@ -90,7 +90,7 @@ exports.createSignupPaymentComplete  = async (req, res, next) => {
     return res.json({
       success: true,
       message: 'Payment complete',
-      donation
+      donation,
     });
   } catch (error) {
     next(error);
@@ -160,7 +160,8 @@ exports.checkPhotoPayment = async (req, res, next) => {
     return res.json({
       success: true,
       unlockedPhoto,
-      donation
+      donation,
+      donationId: donation._id
     });
   } catch (error) {
     next(error);

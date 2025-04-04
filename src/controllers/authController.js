@@ -93,7 +93,6 @@ exports.register = async (req, res, next) => {
         quote: user.quote,
         siteAddress: user.siteAddress,
         donationId: user.donationId,
-        profilePhoto: user.profilePhoto
       }
     });
   } catch (error) {
@@ -334,7 +333,6 @@ exports.generateInvitation = async (req, res, next) => {
     // Check if email already has a pending invitation
     const existingInvitation = await Invitation.findOne({
       email,
-      status: 'pending',
       expiresAt: { $gt: Date.now() }
     });
 
