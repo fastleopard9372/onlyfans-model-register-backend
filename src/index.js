@@ -28,15 +28,22 @@ mongoose.connect(process.env.MONGODB_URI)
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use(helmet());
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.gpteng.co"]
+    }
+  })
+);
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../dist')));
 
-// Root route handler
-app.get('/', (req, res) => {
+// Catch-all route for SPA
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
-
 
 // Routes
 app.use('/api/auth', authRoutes);
