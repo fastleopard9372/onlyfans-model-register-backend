@@ -29,6 +29,14 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Root route handler
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
 
 // Routes
 app.use('/api/auth', authRoutes);
