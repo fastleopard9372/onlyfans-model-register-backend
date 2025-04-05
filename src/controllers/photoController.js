@@ -4,7 +4,7 @@ const UnlockedPhoto = require('../models/UnlockedPhoto');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const sharp = require('sharp');
+// const sharp = require('sharp');
 
 // Create upload directories if they don't exist
 const uploadDir = path.join(__dirname, '../../uploads');
@@ -51,9 +51,9 @@ const createBlurredImage = async (originalFilePath) => {
     const blurredFilePath = path.join(blurredDir, filename);
     
     // Create a blurred version
-    await sharp(originalFilePath)
-      .blur(15) // Adjust blur amount as needed
-      .toFile(blurredFilePath);
+    // await sharp(originalFilePath)
+    //   .blur(15) // Adjust blur amount as needed
+    //   .toFile(blurredFilePath);
     
     return {
       path: blurredFilePath,
