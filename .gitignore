@@ -10,3 +10,4 @@ public/
 .env.development.local
 .env.test.local
 .env.production.local
+.    "sharp": "^0.33.5",
