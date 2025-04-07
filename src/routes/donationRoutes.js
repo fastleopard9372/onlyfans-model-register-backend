@@ -1,34 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
 const {
-  getDonations,
-  getDonation,
-  createDonation,
-  updateDonation,
-  deleteDonation,
-  getMyDonations,
-  getDonationsToMe
+  createPaymentIntent,
+  checkDonationStatus,
+  handlePaymentWebhook,
+  createPaymentComplete
 } = require('../controllers/donationController');
 
-router.use(protect);
+router.post('/create-payment-intent', createPaymentIntent);
+router.get('/check-status/:email/:photoId', checkDonationStatus);
+// router.post('/webhook', handlePaymentWebhook);
+router.post('/payment-complete', createPaymentComplete);
 
-// Get all donations made by current user
-router.get('/my-donations', getMyDonations);
-
-// Get all donations received by current user (for models)
-router.get('/received', getDonationsToMe);
-
-// Admin routes
-router.use(protect);
-
-router.route('/')
-  .get(getDonations)
-  .post(createDonation);
-
-router.route('/:id')
-  .get(getDonation)
-  .put(updateDonation)
-  .delete(deleteDonation);
-
-module.exports = router; 
+module.exports = router;

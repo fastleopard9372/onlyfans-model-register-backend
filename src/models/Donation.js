@@ -5,6 +5,10 @@ const DonationSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a donor email']
   },
+  donorName: {
+    type: String,
+    required: [true, 'Please add a donor name']
+  },
   donorType: {
     type: String,
     enum: ["model", "visitor"],
@@ -12,29 +16,36 @@ const DonationSchema = new mongoose.Schema({
   },
   amount: {
     type: Number,
-    required: [true, 'Please add an amount']
+    required: [true, 'Please add an amount'],
+    min: 1,
+    max: 1000,
+    default: 25
   },
   message: {
     type: String,
+    default: '',
     maxlength: [500, 'Message cannot be more than 500 characters']
   },
   isAnonymous: {
     type: Boolean,
     default: false
   },
-  modelId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  photo: {
+    type: mongoose.Types.ObjectId,
+    ref: 'Photo',
+    required: true
   },
   status: {
     type: String,
-    default: 'pending'
+    default: 'pending',
+    enum: ['pending', 'succeeded', 'failed']
   },
   stripePaymentId: {
-    type: String
+    type: String,
   },
-  stripeSessionId: {
-    type: String
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true

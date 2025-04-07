@@ -17,6 +17,8 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add an email'],
     unique: true,
+    trim: true,
+    lowercase: true,
     match: [
       /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
       'Please add a valid email'
@@ -25,33 +27,31 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please add a password'],
-    minlength: 6,
-    select: false
+    minlength: [6, "Password must be at least 6 characters long"],
+    select: false  // This means password is not returned by default
   },
   role: {
     type: String,
-    enum: ['user', 'model', 'admin'],
+    enum: ['model', 'visitor', 'admin', 'superadmin'],
     default: 'model'
   },
   profilePhoto: {
-    url: String,
-    filename: String
-  },
-  lockedPhoto: {
-    url: String,
-    filename: String
+    type: String,
+    default: null
   },
   siteAddress: {
     type: String,
-    unique: true,
+    // unique: true,
     sparse: true
   },
   bio: {
     type: String,
+    default: '',
     maxlength: [500, 'Bio cannot be more than 500 characters']
   },
   quote: {
     type: String,
+    default: '',
     maxlength: [500, 'Quote cannot be more than 500 characters']
   },
   isActive: {
@@ -59,12 +59,13 @@ const UserSchema = new mongoose.Schema({
     default: true
   },
   donationId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Types.ObjectId,
     ref: 'Donation'
   },
   invitedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    type: mongoose.Types.ObjectId,
+    ref: 'User',
+    default: null
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date

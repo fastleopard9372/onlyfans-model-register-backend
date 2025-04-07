@@ -9,7 +9,7 @@ const {
   deleteUser,
   getCurrentUser,
   updateProfile
-} = require('../controllers/userController');
+} = require('../controllers/1userController');
 
 
 router.route('/:id')

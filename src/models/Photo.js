@@ -1,49 +1,49 @@
 const mongoose = require('mongoose');
 
 const PhotoSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
+  model: {
+    type: mongoose.Types.ObjectId,
     ref: 'User',
+    required: true
+  },
+  originalUrl: {
+    type: String,
+    required: true
+  },
+  blurredUrl: {
+    type: String,
     required: true
   },
   title: {
     type: String,
-    trim: true
+    default: ''
   },
   description: {
     type: String,
-    trim: true
+    default: ''
   },
-  filename: {
-    type: String,
-    required: true
-  },
-  url: {
-    type: String,
-    required: true
-  },
-  blurredFilename: {
-    type: String,
-    required: true
-  },
-  blurredFileUrl: {
-    type: String,
-    required: true
-  },
-  isLocked: {
-    type: Boolean,
-    default: true
+  donationAmount: {
+    type: Number,
+    required: true,
+    min: 1
   },
   isActive: {
     type: Boolean,
     default: true
   },
-  donationCount: {
-    type: Number,
-    default: 0
+  unlockedBy: [{
+    type: String,
+    trim: true,
+    lowercase: true,
+    match: [
+      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+      'Please add a valid email'
+    ]
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-}, {
-  timestamps: true
 });
 
 module.exports = mongoose.model('Photo', PhotoSchema);

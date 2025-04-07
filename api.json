@@ -1,0 +1,503 @@
+{
+  "endpoints": [
+    {
+      "method": "GET",
+      "route": "/api/auth/verify_invitation/:token",
+      "request": {
+        "params": {
+          "token": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "message": "string"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/auth/register",
+      "request": {
+        "body": {
+          "name": "string",
+          "email": "string",
+          "password": "string",
+          "invitationToken": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "token": "string",
+        "user": {
+          "_id": "string",
+          "name": "string",
+          "email": "string",
+          "role": "string"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/auth/login",
+      "request": {
+        "body": {
+          "email": "string",
+          "password": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "token": "string",
+        "user": {
+          "_id": "string",
+          "name": "string",
+          "email": "string",
+          "role": "string"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/models",
+      "request": {
+        "query": {
+          "page": "number",
+          "limit": "number",
+          "q": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "models": "array",
+        "currentPage": "number",
+        "totalPages": "number",
+        "totalModels": "number"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/models/:id",
+      "request": {
+        "params": {
+          "id": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "model": {
+          "_id": "string",
+          "name": "string",
+          "username": "string",
+          "bio": "string",
+          "quote": "string",
+          "siteAddress": "string",
+          "profilePhoto": "string",
+          "lockedPhotos": "array"
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "route": "/api/models/:id",
+      "request": {
+        "params": {
+          "id": "string"
+        },
+        "body": {
+          "name": "string",
+          "bio": "string",
+          "quote": "string",
+          "siteAddress": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "model": "object"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/models/:id/profile_photo",
+      "request": {
+        "params": {
+          "id": "string"
+        },
+        "body": {
+          "photo": "file"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "photo": "object"
+      }
+    },
+    {
+      "method": "DELETE",
+      "route": "/api/models/:id/profile_photo",
+      "request": {
+        "params": {
+          "id": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "message": "string"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/models/:id/update_password",
+      "request": {
+        "params": {
+          "id": "string"
+        },
+        "body": {
+          "currentPassword": "string",
+          "newPassword": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "message": "string"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/photos/locked-photo/models/:id",
+      "request": {
+        "params": {
+          "id": "string"
+        },
+        "body": {
+          "photo": "file"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "photo": {
+          "_id": "string",
+          "url": "string",
+          "thumbnailUrl": "string"
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "route": "/api/photos/locked-photo/:id",
+      "request": {
+        "params": {
+          "id": "string"
+        },
+        "body": {
+          "photo": "file"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "photo": "object"
+      }
+    },
+    {
+      "method": "DELETE",
+      "route": "/api/photos/locked-photo/:id",
+      "request": {
+        "params": {
+          "id": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "message": "string"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/photos/unlocked-photo/:id",
+      "request": {
+        "params": {
+          "id": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "photo": "object"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/admin/models",
+      "request": {
+        "query": {
+          "page": "number",
+          "limit": "number"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "models": "array",
+        "currentPage": "number",
+        "totalPages": "number",
+        "totalModels": "number"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/admin/models/:id/photos",
+      "request": {
+        "params": {
+          "id": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "photos": "array"
+      }
+    },
+    {
+      "method": "DELETE",
+      "route": "/api/admin/models/:id",
+      "request": {
+        "params": {
+          "id": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "message": "string"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/admin/invitations",
+      "request": {
+        "body": {
+          "email": "string",
+          "role": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "invitation": "object"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/admin/donations",
+      "request": {
+        "query": {
+          "page": "number",
+          "limit": "number"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "donations": "array",
+        "currentPage": "number",
+        "totalPages": "number",
+        "totalDonations": "number"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/donations/create-payment-intent",
+      "request": {
+        "body": {
+          "amount": "number",
+          "currency": "string"
+        }
+      },
+      "response": {
+        "clientSecret": "string"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/donations/check-status/:donorEmail/:photoId",
+      "request": {
+        "params": {
+          "donorEmail": "string",
+          "photoId": "string"
+        }
+      },
+      "response": {
+        "isUnlocked": "boolean"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/donations/webhook",
+      "request": {
+        "body": {
+          "type": "string",
+          "data": "object"
+        }
+      },
+      "response": {
+        "received": "boolean"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/donations/complete",
+      "request": {
+        "body": {
+          "paymentIntentId": "string",
+          "photoId": "string",
+          "donorEmail": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "donation": "object"
+      }
+    },
+    {
+      "method": "POST",
+      "route": "/api/invitations/send",
+      "request": {
+        "body": {
+          "email": "string",
+          "role": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "invitation": "object"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/invitations",
+      "request": {
+        "query": {
+          "page": "number",
+          "limit": "number"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "invitations": "array",
+        "currentPage": "number",
+        "totalPages": "number",
+        "totalInvitations": "number"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/users/me",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer token"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "user": {
+          "_id": "string",
+          "name": "string",
+          "email": "string",
+          "role": "string"
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "route": "/api/users/me",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer token"
+        },
+        "body": {
+          "name": "string",
+          "email": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "user": "object"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/users",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer token"
+        },
+        "query": {
+          "page": "number",
+          "limit": "number"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "users": "array",
+        "currentPage": "number",
+        "totalPages": "number",
+        "totalUsers": "number"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/users/:id",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer token"
+        },
+        "params": {
+          "id": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "user": "object"
+      }
+    },
+    {
+      "method": "PUT",
+      "route": "/api/users/:id",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer token"
+        },
+        "params": {
+          "id": "string"
+        },
+        "body": {
+          "name": "string",
+          "email": "string",
+          "role": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "user": "object"
+      }
+    },
+    {
+      "method": "DELETE",
+      "route": "/api/users/:id",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer token"
+        },
+        "params": {
+          "id": "string"
+        }
+      },
+      "response": {
+        "success": "boolean",
+        "message": "string"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/api/download/:filename",
+      "request": {
+        "params": {
+          "filename": "string"
+        }
+      },
+      "response": "file"
+    }
+  ]
+} 

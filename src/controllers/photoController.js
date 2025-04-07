@@ -1,426 +1,122 @@
-const User = require('../models/User');
 const Photo = require('../models/Photo');
-const UnlockedPhoto = require('../models/UnlockedPhoto');
-const multer = require('multer');
+const Donation = require('../models/Donation');
+const fs = require('fs').promises;
 const path = require('path');
-const fs = require('fs');
-// const sharp = require('sharp');
-
-// Create upload directories if they don't exist
-const uploadDir = path.join(__dirname, '../../uploads');
-const photosDir = path.join(uploadDir, 'photos');
-const blurredDir = path.join(uploadDir, 'blurred');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-if (!fs.existsSync(photosDir)) {
-  fs.mkdirSync(photosDir);
-}
-if (!fs.existsSync(blurredDir)) {
-  fs.mkdirSync(blurredDir);
-}
-
-// Set up multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, photosDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: function (req, file, cb) {
-    // Accept only images
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-      return cb(new Error('Only image files are allowed!'), false);
-    }
-    cb(null, true);
-  }
-});
-
-// Helper function to create a blurred version of an image
-const createBlurredImage = async (originalFilePath) => {
-  try {
-    const filename = path.basename(originalFilePath);
-    const blurredFilePath = path.join(blurredDir, filename);
-    
-    // Create a blurred version
-    // await sharp(originalFilePath)
-    //   .blur(15) // Adjust blur amount as needed
-    //   .toFile(blurredFilePath);
-    
-    return {
-      path: blurredFilePath,
-      filename: filename
-    };
-  } catch (error) {
-    console.error('Error creating blurred image:', error);
-    throw error;
-  }
-};
-
-// @desc    Upload a photo
-// @route   POST /api/photos
+// upload locked photo
+// @route   POST /api/locked-photo/:photoId/models/:id
 // @access  Private
-exports.uploadPhoto = async (req, res, next) => {
-  try {
-    // Multer middleware will handle the file upload
-    upload.single('photo')(req, res, async function(err) {
-      if (err) {
-        return res.status(400).json({
+const uploadLockedPhoto = async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const user = req.user;
+      
+      // Only allow users to update their own profile
+      if (user._id.toString() !== id && user.role !== 'admin') {
+        return res.status(403).json({
           success: false,
-          message: err.message
+          message: 'Not authorized to update this profile'
         });
       }
       
-      if (!req.file) {
+      if (!req.processedImage) {
         return res.status(400).json({
           success: false,
-          message: 'Please upload a photo'
+          message: 'Image processing failed'
         });
       }
-      
-      try {
-        // Create blurred version
-        const blurred = await createBlurredImage(req.file.path);
-        
-        // Create photo record
-        const photo = await Photo.create({
-          userId: req.user.id,
-          title: req.body.title || '',
-          description: req.body.description || '',
-          filename: req.file.filename,
-          fileUrl: `/uploads/photos/${req.file.filename}`,
-          blurredFilename: blurred.filename,
-          blurredFileUrl: `/uploads/blurred/${blurred.filename}`,
-          isLocked: req.body.isLocked !== 'false', // Default to true
-          price: req.body.price || 25,
-          isActive: req.body.isActive !== 'false' // Default to true
-        });
-        
-        res.status(201).json({
-          success: true,
-          photo
-        });
-      } catch (error) {
-        // If there's an error, delete the uploaded file
-        if (req.file && req.file.path) {
-          fs.unlinkSync(req.file.path);
-        }
-        
+      const amount = 25;      //req.body.donationAmount;
+      const photo = new Photo({
+        model: id,
+        title: req.body.title,
+        description: req.body.description,
+        originalUrl: req.processedImage.path,
+        blurredUrl: req.processedImage.blurredPath,
+        donationAmount: amount
+      });
+      await photo.save();
+      res.status(200).json({
+        success: true,
+        message: 'Photo uploaded successfully',
+        photo
+      });
+    } catch (error) {
         next(error);
       }
-    });
-  } catch (error) {
-    next(error);
-  }
 };
 
-// @desc    Get all photos (public, active)
-// @route   GET /api/photos
-// @access  Public
-exports.getPhotos = async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page, 8) || 1;
-    const limit = parseInt(req.query.limit, 8) || 16;
-    const q = req.query.q || '';
-    const startIndex = (page - 1) * limit;
-    // Find users who have a profile photo
-    const photos = await User.find({ 
-      'profilePhoto.url': { $exists: true, $ne: null },
-      $or: [
-        { username: { $regex: q, $options: 'i' } },
-        { name: { $regex: q, $options: 'i' } }
-      ]
-    }, 'profilePhoto _id username name').sort({ createdAt: -1 })
-      .skip(startIndex)
-      .limit(limit);
-    
-    const total = await User.countDocuments({ 
-      'profilePhoto.url': { $exists: true, $ne: null }
-    });
-    
-    // Check which photos are unlocked for the current user (if authenticated)
-    // let unlockedPhotoIds = [];
-    // if (req.user) {
-    //   const unlockedPhotos = await UnlockedPhoto.find({ 
-    //     donorEmail: req.user.email 
-    //   });
-    //   unlockedPhotoIds = unlockedPhotos.map(up => up.photoId.toString());
-    // }
-    
-    // // Transform photos to include whether they're unlocked for this user
-    // const transformedPhotos = photos.map(photo => {
-    //   const photoObj = photo.toObject();
-    //   photoObj.isUnlocked = unlockedPhotoIds.includes(photo._id.toString());
-      
-    //   // If photo is locked and not unlocked for this user, return blurred URL
-    //   if (photoObj.isLocked && !photoObj.isUnlocked) {
-    //     photoObj.displayUrl = photoObj.blurredFileUrl;
-    //   } else {
-    //     photoObj.displayUrl = photoObj.fileUrl;
-    //   }
-      
-    //   return photoObj;
-    // });
-    
-    res.status(200).json({
-      success: true,
-      count: photos.length,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      photos: photos
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Get a single photo
-// @route   GET /api/photos/:id
-// @access  Public
-exports.getPhoto = async (req, res, next) => {
-  try {
-    const photo = await Photo.findById(req.params.id)
-      .populate('userId', 'name email siteAddress profilePhoto');
-    
-    if (!photo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Photo not found'
-      });
-    }
-    
-    // Check if photo is unlocked for the current user
-    let isUnlocked = false;
-    if (req.user) {
-      // If user is the owner, they can see it
-      if (photo.userId._id.toString() === req.user.id) {
-        isUnlocked = true;
-      } else {
-        // Check if user has unlocked this photo
-        const unlockedPhoto = await UnlockedPhoto.findOne({
-          photoId: photo._id,
-          donorEmail: req.user.email
-        });
-        
-        isUnlocked = !!unlockedPhoto;
-      }
-    }
-    
-    const photoObj = photo.toObject();
-    photoObj.isUnlocked = isUnlocked;
-    
-    // If photo is locked and not unlocked for this user, return blurred URL
-    if (photoObj.isLocked && !photoObj.isUnlocked) {
-      photoObj.displayUrl = photoObj.blurredFileUrl;
-    } else {
-      photoObj.displayUrl = photoObj.fileUrl;
-    }
-    
-    res.status(200).json({
-      success: true,
-      photo: photoObj
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Update a photo
-// @route   PUT /api/photos/:id
+// update locked photo
+// @route   PUT /api/locked-photo/:photoId/models/:id
 // @access  Private
-exports.updatePhoto = async (req, res, next) => {
+const updateLockedPhoto = async (req, res, next) => {
   try {
-    let photo = await Photo.findById(req.params.id);
+    const { id, photoId } = req.params;
+    const user = req.user;
     
-    if (!photo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Photo not found'
-      });
-    }
-    
-    // Make sure user is the photo owner
-    if (photo.userId.toString() !== req.user.id && req.user.role !== 'admin') {
+    // Only allow users to update their own profile
+    if (user._id.toString() !== id && user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this photo'
+        message: 'Not authorized to update this profile'
       });
     }
     
-    const updateData = {
-      title: req.body.title,
-      description: req.body.description,
-      isLocked: req.body.isLocked,
-      price: req.body.price,
-      isActive: req.body.isActive
-    };
-    
-    // Remove undefined fields
-    Object.keys(updateData).forEach(key => 
-      updateData[key] === undefined && delete updateData[key]
-    );
-    
-    photo = await Photo.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-    
+    if (!req.processedImage) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image processing failed',
+      });
+    }
+    const amount = 25;      //req.body.donationAmount;
+    const photo = await Photo.findById(photoId);
+    if(photo.model.toString() !== id){
+      return res.status(403).json({ message: 'Not authorized to update this profile' });
+    }
+    if(photo.originalUrl){
+      try {
+        await fs.unlink(path.join(__dirname, '../..', photo.originalUrl));
+      } catch (err) {
+        console.error('Error deleting file:', err);
+      }
+    }
+    if(photo.blurredUrl){
+      try {
+        await fs.unlink(path.join(__dirname, '../..', photo.blurredUrl));
+      } catch (err) {
+        console.error('Error deleting file:', err);
+      }
+    }
+    photo.title = req.body.title;
+    photo.description = req.body.description;
+    photo.originalUrl = req.processedImage.path;
+    photo.blurredUrl = req.processedImage.blurredPath;
+    photo.donationAmount = amount;
+    await photo.save();
+
     res.status(200).json({
       success: true,
+      message: 'Photo uploaded successfully',
       photo
     });
   } catch (error) {
-    next(error);
-  }
+      next(error);
+    }
 };
 
-// @desc    Delete a photo
-// @route   DELETE /api/photos/:id
+// get locked photos
+// @route   GET /api/locked-photos/models/:id
 // @access  Private
-exports.deletePhoto = async (req, res, next) => {
-  try {
-    const photo = await Photo.findById(req.params.id);
-    
-    if (!photo) {
-      return res.status(404).json({
-        success: false,
-        message: 'Photo not found'
-      });
-    }
-    
-    // Make sure user is the photo owner
-    if (photo.userId.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to delete this photo'
-      });
-    }
-    
-    // Delete from local storage
-    const originalFilePath = path.join(photosDir, photo.filename);
-    const blurredFilePath = path.join(blurredDir, photo.blurredFilename);
-    
-    if (fs.existsSync(originalFilePath)) {
-      fs.unlinkSync(originalFilePath);
-    }
-    
-    if (fs.existsSync(blurredFilePath)) {
-      fs.unlinkSync(blurredFilePath);
-    }
-    
-    // Delete from database
-    await photo.remove();
-    
-    // Delete related unlocked photos
-    await UnlockedPhoto.deleteMany({ photoId: photo._id });
-    
-    res.status(200).json({
-      success: true,
-      data: {}
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+const lockedPhotos = async (req, res, next) => {
+  try { 
+    const { id } = req.params;
+    const user = req.user;
 
-// @desc    Get user's photos
-// @route   GET /api/photos/user/:userId
-// @access  Public
-exports.getUserPhotos = async (req, res, next) => {
-  try {
-    const userId = req.params.userId;
-    
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 16;
-    const startIndex = (page - 1) * limit;
-    
-    const photos = await Photo.find({ 
-      userId,
-      isActive: true 
-    })
-      .sort({ createdAt: -1 })
-      .skip(startIndex)
-      .limit(limit);
-    
-    const total = await Photo.countDocuments({ 
-      userId,
-      isActive: true 
-    });
-    
-    // Check which photos are unlocked for the current user (if authenticated)
-    let unlockedPhotoIds = [];
-    if (req.user) {
-      // If user is viewing their own photos, all are unlocked
-      if (req.user.id === userId) {
-        unlockedPhotoIds = photos.map(p => p._id.toString());
-      } else {
-        const unlockedPhotos = await UnlockedPhoto.find({ 
-          donorEmail: req.user.email 
-        });
-        unlockedPhotoIds = unlockedPhotos.map(up => up.photoId.toString());
-      }
+    if(user.role !== 'admin' && user._id.toString() !== id){
+      return res.status(403).json({ message: 'Not authorized to update this profile' });
     }
-    
-    // Transform photos to include whether they're unlocked for this user
-    const transformedPhotos = photos.map(photo => {
-      const photoObj = photo.toObject();
-      photoObj.isUnlocked = unlockedPhotoIds.includes(photo._id.toString());
-      
-      // If photo is locked and not unlocked for this user, return blurred URL
-      if (photoObj.isLocked && !photoObj.isUnlocked) {
-        photoObj.displayUrl = photoObj.blurredFileUrl;
-      } else {
-        photoObj.displayUrl = photoObj.fileUrl;
-      }
-      
-      return photoObj;
-    });
-    
+    const photos = await Photo.find({ model: id }); 
     res.status(200).json({
       success: true,
-      count: photos.length,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      photos: transformedPhotos
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Get my photos (for logged in model)
-// @route   GET /api/photos/my
-// @access  Private
-exports.getMyPhotos = async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 16;
-    const startIndex = (page - 1) * limit;
-    
-    const photos = await Photo.find({ userId: req.user.id })
-      .sort({ createdAt: -1 })
-      .skip(startIndex)
-      .limit(limit);
-    
-    const total = await Photo.countDocuments({ userId: req.user.id });
-    
-    res.status(200).json({
-      success: true,
-      count: photos.length,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      message: '',
       photos
     });
   } catch (error) {
@@ -428,13 +124,116 @@ exports.getMyPhotos = async (req, res, next) => {
   }
 };
 
-
-exports.getPhotoBlob = async (req, res, next) => {
+// get locked photo
+// @route   GET /api/locked-photo/:photoId/models/:id
+// @access  Private
+const lockedPhoto = async (req, res, next) => {
   try {
-    const { photos, file } = req.params;
-    const filePath = path.join(__dirname, '..', '..', 'uploads', photos, file);
-    res.sendFile(filePath);
+    const { id, photoId } = req.params;
+    const user = req.user;
+    
+    if(user.role !== 'admin' && user._id.toString() !== id){
+      return res.status(403).json({ message: 'Not authorized to update this profile' });
+    }
+    const photo = await Photo.findById(photoId);  
+    if(photo.model.toString() !== id){
+      return res.status(403).json({ message: 'Not authorized to update this profile' });
+    }
+    res.status(200).json({
+      success: true,
+      message: '',
+      photo
+    }); 
   } catch (error) {
     next(error);
   }
 }
+
+// delete locked photo
+// @route   DELETE /api/locked-photo/:photoId/models/:id
+// @access  Private
+const deleteLockedPhoto = async (req, res, next) => {
+  try {
+    const { id, photoId } = req.params;
+    const user = req.user;
+    
+    // Only allow users to update their own profile 
+    if (user._id.toString() !== id && user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to update this profile' });
+    } 
+
+    const photo = await Photo.findById(photoId);
+
+    if (!photo) {
+      return res.status(404).json({ message: 'Photo not found' });
+    } 
+
+    if(photo.model.toString() !== id){
+      return res.status(403).json({ message: 'Not authorized to update this profile' });
+    }
+    if(photo.originalUrl){
+      try {
+        await fs.unlink(path.join(__dirname, '../..', photo.originalUrl));
+      } catch (err) {
+        console.error('Error deleting file:', err);
+      }
+    }
+    if(photo.blurredUrl){
+      try {
+        await fs.unlink(path.join(__dirname, '../..', photo.blurredUrl));
+      } catch (err) {
+        console.error('Error deleting file:', err);
+      }
+    }
+    await photo.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: 'Photo deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// get unlocked photo
+// @route   GET /api/locked-photo/:photoId/visitor/:email/unlocked
+// @access  public
+const unlockedPhoto = async (req, res, next) => {
+  try {
+    const { photoId, email } = req.params;
+    const donation = await Donation.findOne({ photo: photoId, donorEmail: email });
+    if(!donation){
+      return res.status(404).json({ success: false, message: 'You have not donated to this photo' });
+    }
+    if(donation.status !== 'successed'){
+      return res.status(400).json({ success: false, message: 'This photo is not unlocked' });
+    }
+    const photo = await Photo.findById(photoId);
+    
+    if (!photo) {
+      return res.status(404).json({ success: false, message: 'Photo not found' });
+    }
+    
+    // Check if the email is already in the unlockedBy array
+    if (photo.unlockedBy.includes(email)) {
+      return res.status(200).json({
+        success: true,
+        message: 'Photo already unlocked',
+        photo
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = {
+  uploadLockedPhoto,
+  updateLockedPhoto,
+  deleteLockedPhoto,
+  lockedPhotos,
+  lockedPhoto,
+  unlockedPhoto
+};
