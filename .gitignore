@@ -1,13 +1,9 @@
 .env
 node_modules
-uploads/
-blurred/
-photos/
-original/
+
 node_modules/w
 public/
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.    "sharp": "^0.33.5",
