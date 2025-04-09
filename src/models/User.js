@@ -58,6 +58,38 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  age: {    
+    type: Number,
+    default: 0
+  },
+  zodiac: {
+    type: String,
+    default: ''
+  },
+  height: {
+    type: Number,
+    default: 0
+  },
+  weight: {
+    type: Number,
+    default: 0
+  },
+  eyes: {
+    type: String,
+    default: ''
+  },
+  hair: {
+    type: String,
+    default: ''
+  },
+  favoriteBook: {
+    type: String,
+    default: ''
+  },
+  futureGoals: {
+    type: String,
+    default: ''
+  },
   donationId: {
     type: mongoose.Types.ObjectId,
     ref: 'Donation'
@@ -67,6 +99,7 @@ const UserSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
+
   resetPasswordToken: String,
   resetPasswordExpire: Date
 }, {

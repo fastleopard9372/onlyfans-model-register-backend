@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Invitation = require('../models/Invitation');
 const generateToken = require('../utils/generateToken');
+const crypto = require('crypto');
 
 // @desc    Register a new model
 // @route   POST /api/auth/register
@@ -176,6 +177,22 @@ const login = async (req, res, next) => {
   }
 };
 
+const newGenerateModelId =async(req,res,next)=>{
+  try {
+      const modelIds = await User.find({role:'model'},'_id');
+      let modelId = crypto.randomBytes(3).toString('hex').toUpperCase();
+      const modelIdsArray = modelIds.map(model => model._id);
+      while(modelIdsArray.includes(modelId)){
+        modelId = crypto.randomBytes(6).toString('hex');
+      }
+      res.status(200).json({
+        success:true,
+        modelId:modelId
+      })
+  } catch (error) {
+    next(error);
+  }
+}
 
 // @desc    Logout user
 // @route   POST /api/auth/logout
@@ -190,5 +207,6 @@ module.exports = {
   register,
   admin_register,
   login,
-  logout
+  logout,
+  newGenerateModelId
 };

@@ -92,7 +92,15 @@ const getModelById = async (req, res, next) => {
         quote: model.quote,
         siteAddress: model.siteAddress,
         profilePhoto: model.profilePhoto,
-        lockedPhotos: model.photos
+        lockedPhotos: model.photos,
+        age: model.age,
+        zodiac: model.zodiac,
+        height: model.height,
+        weight: model.weight,
+        eyes: model.eyes,
+        hair: model.hair,
+        favoriteBook: model.favoriteBook,
+        futureGoals: model.futureGoals
     };
     
       res.status(200).json({
@@ -111,7 +119,7 @@ const getModelById = async (req, res, next) => {
 const updateModel = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, bio, quote, siteAddress } = req.body;
+    const { name, bio, quote, siteAddress, age, zodiac, height, weight, eyes, hair, favoriteBook, futureGoals } = req.body;
     const user = req.user;
         
     // Only allow users to update their own profile
@@ -127,9 +135,9 @@ const updateModel = async (req, res) => {
     
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { name, bio, quote, siteAddress },
+      { name, bio, quote, siteAddress, age, zodiac, height, weight, eyes, hair, favoriteBook, futureGoals },
       { new: true, runValidators: true }
-    ).select('_id name bio quote siteAddress profilePhoto siteAddress profilePhoto');
+    ).select('_id name bio quote siteAddress profilePhoto age zodiac height weight eyes hair favoriteBook futureGoals');
     if (!updatedUser) {
       return res.status(404).json({success: false, message: 'User not found' });
     }
