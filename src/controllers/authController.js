@@ -180,10 +180,10 @@ const login = async (req, res, next) => {
 const newGenerateModelId =async(req,res,next)=>{
   try {
       const modelIds = await User.find({role:'model'},'_id');
-      let modelId = crypto.randomBytes(3).toString('hex').toUpperCase();
+      let modelId = Math.floor(100000 + Math.random() * 900000).toString();
       const modelIdsArray = modelIds.map(model => model._id);
       while(modelIdsArray.includes(modelId)){
-        modelId = crypto.randomBytes(6).toString('hex');
+        modelId = Math.floor(100000 + Math.random() * 900000).toString();
       }
       res.status(200).json({
         success:true,

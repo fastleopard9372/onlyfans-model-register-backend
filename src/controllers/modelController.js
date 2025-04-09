@@ -27,7 +27,7 @@ const getModels = async (req, res, next) => {
     const skip = (page - 1) * limit;
     
     const models = await User.find(searchQuery)
-      .select('_id name profilePhoto')
+      .select('_id name profilePhoto username age')
       .skip(skip)
       .limit(limit);
     
