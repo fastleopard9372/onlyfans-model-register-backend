@@ -15,7 +15,7 @@ const getModels = async (req, res, next) => {
     
     const searchQuery = search 
       ? { 
-          name: { $regex: search, $options: 'i' },
+          username: { $regex: search, $options: 'i' },
           role: 'model',
           profilePhoto: { $ne: null }
         }
