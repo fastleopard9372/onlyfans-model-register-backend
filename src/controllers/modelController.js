@@ -38,6 +38,7 @@ const getModels = async (req, res, next) => {
       message: '',
       models,
       page: page,
+      keyword: search,
       limit: limit,
       totalPages: Math.ceil(total / limit),
       totalModels: total
