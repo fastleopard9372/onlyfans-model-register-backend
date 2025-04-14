@@ -8,7 +8,7 @@ const crypto = require('crypto');
 // @access  Public (with invitation code)
 const register = async (req, res, next) => {
   try {
-    const { name, username, email, token} = req.body;
+    const { name, username, email, token, role} = req.body;
     
     if(name.length < 3){
       return res.status(400).json({
@@ -16,49 +16,53 @@ const register = async (req, res, next) => {
         message: 'Name must be at least 3 characters long'
       });
     }
-    console.log(email,token);
-    
-    // Validate invitation token
-    const invitation = await Invitation.findOne({ 
-      token,
-      email,
-      status: 'pending',
-      expiresAt: { $gt: new Date() }
-    });
-    
-    if (!invitation) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired invitation code'
+    if (role === 'model') {
+      // Validate invitation token
+      const invitation = await Invitation.findOne({
+        token,
+        email,
+        status: 'pending',
+        expiresAt: { $gt: new Date() }
       });
+    
+      if (!invitation) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired invitation code'
+        });
+      }
     }
 
     // Check if user already exists
-    const existingEmail = await User.findOne({ email });
+    const existingEmail = await User.findOne({ email, role: role });
     if (existingEmail) {
       return res.status(400).json({
         success: false,
         message: 'Email already registered'
       });
     }
-    const existingUsername = await User.findOne({ username });
-    if (existingUsername) {
-      return res.status(400).json({
-        success: false,
-        message: 'Username already registered'
-      });
+
+    if(role === 'model'){
+      const existingUsername = await User.findOne({ username, role: role });
+      if (existingUsername) {
+        return res.status(400).json({
+          success: false,
+          message: 'Username already registered'
+        });
+      }
+      // Update invitation status
+      invitation.status = 'accepted';
+      await invitation.save();
     }
 
     // Create new user
     const user = await User.create({
       ...req.body,
-      role: 'model',
-      invitedBy: invitation.sender
+      role: role,
+      invitedBy: role === 'model' ? invitation.sender : null  
     });
 
-    // Update invitation status
-    invitation.status = 'accepted';
-    await invitation.save();
+
 
     // await emailService.sendRegistrationSuccessEmail(user);
     
@@ -180,10 +184,10 @@ const login = async (req, res, next) => {
 const newGenerateModelId =async(req,res,next)=>{
   try {
       const modelIds = await User.find({role:'model'},'_id');
-      let modelId = Math.floor(100000 + Math.random() * 900000).toString();
+      let modelId = Math.floor(1000 + Math.random() * 9000).toString();
       const modelIdsArray = modelIds.map(model => model._id);
       while(modelIdsArray.includes(modelId)){
-        modelId = Math.floor(100000 + Math.random() * 900000).toString();
+        modelId = Math.floor(1000 + Math.random() * 9000).toString();
       }
       res.status(200).json({
         success:true,

@@ -9,7 +9,7 @@ const sendInvitation = async (req, res, next) => {
     const {id} = req.params;
     const user = req.user;
     
-    if(user.role !== 'model'){
+    if(user.role !== 'model' || user.role !== 'admin' || user.role !== 'superadmin'){
       return res.status(403).json({
         success: false,
         message: 'Not authorized to send invitations'
@@ -68,7 +68,7 @@ const getInvitations = async (req, res, next) => {
     const {id} = req.params;
     const user = req.user;
     
-    if(user.role !== 'model'){
+    if(user.role !== 'model' || user.role !== 'admin' || user.role !== 'superadmin'){
       return res.status(403).json({
         success: false,
         message: 'Not authorized to get invitations'
@@ -98,11 +98,9 @@ const getInvitations = async (req, res, next) => {
 // @access  Public
 const verifyInvitation = async (req, res, next) => {
   try {
-    const { token, email } = req.query;
-    
+    const { token } = req.query;
     const invitation = await Invitation.findOne({ 
       token, 
-      email,
       expiresAt: { $gt: new Date() }
     });
     if (!invitation) {
@@ -118,6 +116,7 @@ const verifyInvitation = async (req, res, next) => {
     res.status(200).json({ 
       success: true,
       message: 'Valid invitation',
+      token: invitation.token,
       email: invitation.email
     });
   } catch (error) {

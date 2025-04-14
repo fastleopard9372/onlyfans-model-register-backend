@@ -40,9 +40,47 @@ const InvitationSchema = new mongoose.Schema({
 //generate unique token before saving if not set
 InvitationSchema.pre('save', async function (next) {
   
-  if (!this.token) {
-    this.token = crypto.randomBytes(6).toString('hex').toUpperCase();
+  // Skip if token is already defined
+  if (this.token) {
+    return next();
   }
+  
+  // Generate token with format "TRX-XXX000" where X is a random character and 0 is a random digit
+  const generateToken = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let randomChars = '';
+    // Generate 3 random characters
+    for (let i = 0; i < 3; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      randomChars += characters.charAt(randomIndex);
+    }
+    
+    // Generate 3 random digits
+    const randomDigits = Math.floor(100 + Math.random() * 900); // Ensures 3 digits (100-999)
+    
+    return `${randomChars}-${randomDigits}`;
+  };
+  
+  // Try to create a unique token (retry if duplicate)
+  let token = generateToken();
+  let isUnique = false;
+  
+  while (!isUnique) {
+    // Check if this token already exists in the database
+    const existingDoc = await this.constructor.findOne({ token });
+    
+    if (!existingDoc) {
+      isUnique = true;
+    } else {
+      token = generateToken(); // Generate a new token
+    }
+  }
+  
+  if (!isUnique) {
+    return next(new Error('Could not generate a unique token after multiple attempts'));
+  }
+  
+  this.token = token;
   next();
 });
 

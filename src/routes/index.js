@@ -7,12 +7,15 @@ const invitationRoutes = require('./invitationRoutes');
 const donationRoutes = require('./donationRoutes');
 const adminRoutes = require('./adminRoutes');
 const photoRoutes = require('./photoRoutes');
+const chatRoutes = require('./chatRoutes');
+
 router.use('/auth', authRoutes);
 router.use('/models', modelRoutes);
 router.use('/invitations', invitationRoutes);
 router.use('/donations', donationRoutes);
 router.use('/photos', photoRoutes);
 router.use('/admin', adminRoutes);
+router.use('/chat', chatRoutes);
 
 module.exports = router;
 

@@ -4,6 +4,8 @@ const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const path = require('path');
+const http = require('http');
+const setupSocket = require('./socket/chat');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const routes = require('./routes/index');
@@ -39,6 +41,9 @@ app.use('/api/uploads', express.static(path.join(__dirname, '../uploads'), {
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); // 👈 crucial line
   }
 }));
+
+const server = http.createServer(app);
+setupSocket(server);
 
 app.use('/api', routes);
 app.use(errorHandler);
