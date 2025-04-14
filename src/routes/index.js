@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authRoutes = require('./authRoutes');
 const modelRoutes = require('./modelRoutes');
+const visitorRoutes = require('./visitorRoutes');
 const invitationRoutes = require('./invitationRoutes');
 const donationRoutes = require('./donationRoutes');
 const adminRoutes = require('./adminRoutes');
@@ -11,6 +12,7 @@ const chatRoutes = require('./chatRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/models', modelRoutes);
+router.use('/visitors', visitorRoutes);
 router.use('/invitations', invitationRoutes);
 router.use('/donations', donationRoutes);
 router.use('/photos', photoRoutes);

@@ -1,7 +1,9 @@
 const Donation = require('../models/Donation');
 const Photo = require('../models/Photo');
+const User = require('../models/User');
 const stripe = require('../config/stripe');
 const mongoose = require('mongoose');
+const generateCode = require('../utils/generateCode');
 
 // create payment intent
 // @route   POST /api/donations/create-payment-intent
@@ -9,25 +11,25 @@ const mongoose = require('mongoose');
 exports.createPaymentIntent = async (req, res, next) => {
   try {
     const { photoId, amount, name, email, donorType } = req.body;
-    console.log(photoId, amount, name, email, donorType);
     
-    // check if user has already donated to this photo);
-    const donation = await Donation.findOne({
-      photo: photoId,
-      donorEmail: email,
-      donorType: donorType,
-    });
-    
+    let donation = await Donation.findOne({ donorEmail: email, photo: photoId, donorType: donorType });
     if (donation) {
-      if(donation.status === 'successed'){  
-        return res.status(400).json({
-          success: false,
-          type: "already_donated",
-          message: 'You have already donated to this photo'
-        });
-      }else if(donation.status === 'pending'){
-        await Donation.findByIdAndDelete(donation._id);
-      }
+      return res.status(400).json({
+        success: false,
+        type: "already_donated",
+        message: 'You have already donated to this photo'
+      });
+    } else {
+      const newDonation = new Donation({
+        donorEmail: email,
+        donorType: donorType,
+        donorName: name,
+        photo: photoId,
+        amount: amount,
+        status: 'pending'
+      });
+      await newDonation.save();
+      donation = newDonation;
     }
     
     const photo = await Photo.findById(photoId);
@@ -59,22 +61,22 @@ exports.createPaymentIntent = async (req, res, next) => {
         donorName: name
       }
     });
-    
+    let code = generateCode();
+    console.log(code);
 
-    // create donation record
-    const newDonation = new Donation({
-      donorEmail: email,
-      donorType: donorType,
-      donorName: name, 
-      photo: photo._id,
-      amount: amount,
-      stripePaymentId: paymentIntent.id,
-      status: 'pending'
-    });
-    await newDonation.save();
+    let user = await User.findOne({ email: email, role:"visitor" });
+    if(!user){
+      const newUser = new User({
+        email: email,
+        name: name,
+        username: code,
+        password: code,
+        role: "visitor"
+      });
+      await newUser.save()
+      user = newUser
+    }
 
-
-    
     // Drop the index
     try {
       const collection = mongoose.connection.collection('photos');
@@ -83,7 +85,6 @@ exports.createPaymentIntent = async (req, res, next) => {
       console.log(err);
     }
 
-
     await Photo.findByIdAndUpdate(photoId, {
       $addToSet: { unlockedBy: email }
     }); 
@@ -91,8 +92,9 @@ exports.createPaymentIntent = async (req, res, next) => {
     return res.json({
       success: true,
       message: 'Payment intent created successfully',
-      donationId: newDonation._id,
-      paymentIntent: paymentIntent.client_secret
+      paymentIntent: paymentIntent.client_secret,
+      donationId: donation._id,
+      user: user
     });
   } catch (err) {
     next(err);
@@ -201,12 +203,22 @@ exports.createPaymentComplete  = async (req, res, next) => {
     }
     donation.stripePaymentId = paymentIntent.id;
     donation.status = paymentIntent.status;
-    
+
     await donation.save();
+
+    const user = await User.findOne({ email: donation.donorEmail });
+    if(!user){
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
     return res.json({
       success: true,
       message: 'Payment complete',
-      donation:donation
+      donation: donation,
+      user: user
     });
   } catch (error) {
     next(error);

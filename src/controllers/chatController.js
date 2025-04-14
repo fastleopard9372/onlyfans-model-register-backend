@@ -39,13 +39,15 @@ exports.getConversations = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Conversations fetched successfully",
       count: formattedConversations.length,
       data: formattedConversations
     });
   } catch (error) {
     res.status(500).json({
-      success: false,
-      error: 'Server Error'
+      success: false, 
+      message: "Server Error",
+      error: error
     });
   }
 };
@@ -69,7 +71,8 @@ exports.getConversationById = async (req, res) => {
     if (!conversation) {
       return res.status(404).json({
         success: false,
-        error: 'Conversation not found'
+        message: "Conversation not found",
+        error: error
       });
     }
 
@@ -113,7 +116,8 @@ exports.getConversationById = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Server Error'
+      message: "Server Error",
+      error: error
     });
   }
 };
@@ -128,7 +132,8 @@ exports.startConversation = async (req, res) => {
     if (!mongoose.isValidObjectId(otherUserId)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid user ID'
+        message: "Invalid user ID",
+        error: error
       });
     }
 
@@ -137,7 +142,8 @@ exports.startConversation = async (req, res) => {
     if (!otherUser) {
       return res.status(404).json({
         success: false,
-        error: 'User not found'
+        message: "User not found",
+        error: error
       });
     }
 
@@ -170,12 +176,14 @@ exports.startConversation = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Conversation started successfully",
       data: formattedConversation
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Server Error'
+      message: "Server Error",
+      error: error
     });
   }
 };
@@ -190,7 +198,8 @@ exports.sendMessage = async (req, res) => {
     if (!content && attachments.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'Message content or attachments are required'
+        message: "Message content or attachments are required",
+        error: error
       });
     }
 
@@ -199,7 +208,8 @@ exports.sendMessage = async (req, res) => {
     if (!recipient) {
       return res.status(404).json({
         success: false,
-        error: 'Recipient not found'
+        message: "Recipient not found",
+        error: error
       });
     }
 
@@ -244,7 +254,8 @@ exports.sendMessage = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Server Error'
+      message: "Server Error",
+      error: error
     });
   }
 };
@@ -263,7 +274,8 @@ exports.deleteConversation = async (req, res) => {
     if (!conversation) {
       return res.status(404).json({
         success: false,
-        error: 'Conversation not found'
+        message: "Conversation not found",
+        error: error
       });
     }
 
@@ -273,12 +285,14 @@ exports.deleteConversation = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Conversation deleted successfully",
       data: {}
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Server Error'
+      message: "Server Error",
+      error: error
     });
   }
 };
@@ -288,19 +302,52 @@ exports.getUnreadCount = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const unreadCount = await Message.countDocuments({
-      recipient: userId,
-      isRead: false
-    });
-
+    const results = await Message.aggregate([
+      {
+        $match: {
+          recipient: new mongoose.Types.ObjectId(userId),
+          isRead: false
+        }
+      },
+      {
+        $facet: {
+          grouped: [
+            {
+              $group: {
+                _id: '$sender',
+                count: { $sum: 1 }
+              }
+            },
+            {
+              $project: {
+                id: '$_id',
+                count: 1,
+                _id: 0
+              }
+            }
+          ],
+          total: [
+            {
+              $count: 'count'
+            }
+          ]
+        }
+      }
+    ]);
+    const unreadMessages = results[0].grouped || {};
+    const unreadCount = results[0].total[0]?.count || 0;
+    
     res.status(200).json({
       success: true,
-      data: { unreadCount }
+      data: { unreadMessages, unreadCount }
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Server Error'
+      message: "Server Error",
+      error: error
     });
   }
 };
+
+

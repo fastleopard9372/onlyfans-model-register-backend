@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const crypto = require('crypto');
+const generateCode = require('../utils/generateCode');
 
 const InvitationSchema = new mongoose.Schema({
   sender: {
@@ -45,24 +45,10 @@ InvitationSchema.pre('save', async function (next) {
     return next();
   }
   
-  // Generate token with format "TRX-XXX000" where X is a random character and 0 is a random digit
-  const generateToken = () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let randomChars = '';
-    // Generate 3 random characters
-    for (let i = 0; i < 3; i++) {
-      const randomIndex = Math.floor(Math.random() * characters.length);
-      randomChars += characters.charAt(randomIndex);
-    }
-    
-    // Generate 3 random digits
-    const randomDigits = Math.floor(100 + Math.random() * 900); // Ensures 3 digits (100-999)
-    
-    return `${randomChars}-${randomDigits}`;
-  };
+  
   
   // Try to create a unique token (retry if duplicate)
-  let token = generateToken();
+  let token = generateCode();
   let isUnique = false;
   
   while (!isUnique) {
@@ -72,7 +58,7 @@ InvitationSchema.pre('save', async function (next) {
     if (!existingDoc) {
       isUnique = true;
     } else {
-      token = generateToken(); // Generate a new token
+      token = generateCode(); // Generate a new token
     }
   }
   

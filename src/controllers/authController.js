@@ -1,8 +1,7 @@
 const User = require('../models/User');
 const Invitation = require('../models/Invitation');
 const generateToken = require('../utils/generateToken');
-const crypto = require('crypto');
-
+const emailService = require('../services/emailService');
 // @desc    Register a new model
 // @route   POST /api/auth/register
 // @access  Public (with invitation code)
@@ -62,9 +61,11 @@ const register = async (req, res, next) => {
       invitedBy: role === 'model' ? invitation.sender : null  
     });
 
-
-
-    // await emailService.sendRegistrationSuccessEmail(user);
+    // if (user.role === 'model') { 
+    //   await emailService.sendRegistrationSuccessEmail(user);
+    // } else if (user.role === "visitor") {
+    //   await emailService.sendVisitorRegistrationSuccessEmail({ ...user, password: req.body.password });
+    // }
     
     const jwtToken = generateToken(user._id);
 

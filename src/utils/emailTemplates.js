@@ -225,9 +225,79 @@ const formatDate = (date) => {
       </html>
     `;
   };
+  // Visitor registration success email template
+  const visitorRegistrationSuccessEmail = ({ name, password }) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Welcome to Model Platform</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            background-color: #4a6cf7;
+            padding: 20px;
+            text-align: center;
+            color: white;
+          }
+          .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+          }
+          .button {
+            display: inline-block;
+            background-color: #4a6cf7;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+          }
+          .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            padding: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Welcome to Model Platform!</h1>
+          </div>
+          <div class="content">
+            <p>Hello ${name},</p>
+            <p>Thank you for registering with Book Babes! Your account has been successfully created.</p>
+            <p>You can now start browsing the platform and discover your favorite models.</p>
+            <p>Your password is:</p>
+            <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 18px;">${password}</div>
+            <p>If you have any questions, please contact us at ${process.env.SUPPORT_EMAIL || 'support@example.com'}.</p>
+          </div>
+          <div class="footer">
+            <p>&copy; ${new Date().getFullYear()} Book Babes. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  };
   
   module.exports = {
     invitationEmail,
     adminInvitationEmail,
-    registrationSuccessEmail
+    registrationSuccessEmail,
+    visitorRegistrationSuccessEmail
   };

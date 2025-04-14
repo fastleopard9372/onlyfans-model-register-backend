@@ -52,7 +52,7 @@ const sendRegistrationSuccessEmail = async (user) => {
   const mailOptions = {
     from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
     to: user.email,
-    subject: 'Welcome to Model Platform',
+    subject: 'Welcome to Book Babes',
     html: emailTemplates.registrationSuccessEmail({
       name: user.name
     })
@@ -61,8 +61,22 @@ const sendRegistrationSuccessEmail = async (user) => {
   return transporter.sendMail(mailOptions);
 };
 
+const sendVisitorRegistrationSuccessEmail = async (user) => {
+  const mailOptions = {
+    from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+    to: user.email,
+    subject: 'Welcome to Book Babes',
+    html: emailTemplates.visitorRegistrationSuccessEmail({
+      name: user.name
+      })
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
 module.exports = {
   sendInvitationEmail,
   sendAdminInvitationEmail,
-  sendRegistrationSuccessEmail
+  sendRegistrationSuccessEmail,
+  sendVisitorRegistrationSuccessEmail
 };

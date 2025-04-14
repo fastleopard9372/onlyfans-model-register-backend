@@ -98,7 +98,11 @@ const getInvitations = async (req, res, next) => {
 // @access  Public
 const verifyInvitation = async (req, res, next) => {
   try {
-    const { token } = req.query;
+    let { token } = req.query;
+    //TDX-233 TDX233
+    if(!token.includes('-') && token.length === 6){
+      token = token.slice(0, 3) + '-' + token.slice(3);
+    }
     const invitation = await Invitation.findOne({ 
       token, 
       expiresAt: { $gt: new Date() }
@@ -116,8 +120,7 @@ const verifyInvitation = async (req, res, next) => {
     res.status(200).json({ 
       success: true,
       message: 'Valid invitation',
-      token: invitation.token,
-      email: invitation.email
+      invitation: invitation
     });
   } catch (error) {
     next(error);
