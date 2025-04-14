@@ -9,9 +9,9 @@ const path = require('path');
 // Get all models for admin
 const getAllModels = async (req, res) => {
     try {
-        if(req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+        if(req.user.role !== 'admin') {
             return res.status(403).json({ message: 'Unauthorized' });
-        }
+        }s
       const models = await User.find({ role: 'model' })
         .select('_id name username email profilePhoto invitedBy createdAt')
           .populate('invitedBy', 'name email username');
@@ -30,7 +30,7 @@ const getAllModels = async (req, res) => {
 // Get all donations for admin
 const getAllDonations = async (req, res, next) => {
   try {
-    if(req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+    if(req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Unauthorized' });
     }
     const donations = await Donation.find()
@@ -71,7 +71,7 @@ const createInvitation = async (req, res, next) => {
     const { email } = req.body;
     const user = req.user;
     
-    if(user.role !== 'admin' && user.role !== 'superadmin') {
+    if(user.role !== 'admin') {
         return res.status(403).json({ message: 'Unauthorized' });
     }
     // Check if email is already registered
@@ -114,7 +114,7 @@ const createInvitation = async (req, res, next) => {
 // Admin deletes model
 const deleteModel = async (req, res, next) => {
   try {
-    if(req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+    if(req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Unauthorized' });
     }
     const { id } = req.params;

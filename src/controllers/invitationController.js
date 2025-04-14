@@ -9,7 +9,7 @@ const sendInvitation = async (req, res, next) => {
     const {id} = req.params;
     const user = req.user;
     
-    if(user.role !== 'model' || user.role !== 'admin' || user.role !== 'superadmin'){
+    if(user.role !== 'model'){
       return res.status(403).json({
         success: false,
         message: 'Not authorized to send invitations'
@@ -68,7 +68,7 @@ const getInvitations = async (req, res, next) => {
     const {id} = req.params;
     const user = req.user;
     
-    if(user.role !== 'model' || user.role !== 'admin' || user.role !== 'superadmin'){
+    if(user.role !== 'model'){
       return res.status(403).json({
         success: false,
         message: 'Not authorized to get invitations'
