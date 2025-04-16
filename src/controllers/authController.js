@@ -92,7 +92,6 @@ const register = async (req, res, next) => {
 // @access  Public (with invitation code)
 const admin_register = async (req, res, next) => {
   try {
-    console.log(req.body);
     const { name, username, email, password } = req.body;
     // Check if user already exists
     const existingUser = await User.findOne({ role: 'admin', email , username });
@@ -134,7 +133,6 @@ const admin_register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-
     // Validate email & password
     if (!email || !password) {
       return res.status(400).json({
@@ -142,16 +140,16 @@ const login = async (req, res, next) => {
         message: 'Please provide email and password'
       });
     }
-
     // Check for user
     const user = await User.findOne({ email }).select('+password');
+    
     if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
-
+    
     // Check if password matches
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
