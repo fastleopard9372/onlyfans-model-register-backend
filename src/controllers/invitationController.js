@@ -101,7 +101,7 @@ const verifyInvitation = async (req, res, next) => {
     let { token } = req.query;
     //TDX-233 TDX233
     if(!token.includes('-') && token.length === 6){
-      token = token.slice(0, 3) + '-' + token.slice(3);
+      token = token.slice(0, 3).toUpperCase() + '-' + token.slice(3);
     }
     const invitation = await Invitation.findOne({ 
       token, 

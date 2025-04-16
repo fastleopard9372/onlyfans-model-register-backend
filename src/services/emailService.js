@@ -74,9 +74,22 @@ const sendVisitorRegistrationSuccessEmail = async (user) => {
   return transporter.sendMail(mailOptions);
 };
 
+const sendTestEmail = async (email, subject, text) => {
+  const mailOptions = {
+    from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+    to: email,
+    subject,  
+    text
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
+
 module.exports = {
   sendInvitationEmail,
   sendAdminInvitationEmail,
   sendRegistrationSuccessEmail,
-  sendVisitorRegistrationSuccessEmail
+  sendVisitorRegistrationSuccessEmail,
+  sendTestEmail
 };

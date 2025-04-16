@@ -10,6 +10,10 @@ const adminRoutes = require('./adminRoutes');
 const photoRoutes = require('./photoRoutes');
 const chatRoutes = require('./chatRoutes');
 
+const testController = require('../controllers/testController');
+
+router.get('/test-email', testController.sendTestEmail);
+
 router.use('/auth', authRoutes);
 router.use('/models', modelRoutes);
 router.use('/visitors', visitorRoutes);
