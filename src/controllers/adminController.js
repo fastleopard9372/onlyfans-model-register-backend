@@ -6,7 +6,6 @@ const emailService = require('../services/emailService');
 const fs = require('fs').promises;
 const path = require('path');
 const generateCode = require('../utils/generateCode');
-const emailService = require('../services/emailService');
 
 const addModel = async (req, res, next) => {
   try {
