@@ -61,11 +61,11 @@ const register = async (req, res, next) => {
       invitedBy: role === 'model' ? invitation.sender : null  
     });
 
-    // if (user.role === 'model') { 
-    //   await emailService.sendRegistrationSuccessEmail(user);
-    // } else if (user.role === "visitor") {
-    //   await emailService.sendVisitorRegistrationSuccessEmail({ ...user, password: req.body.password });
-    // }
+    if (user.role === 'model') { 
+      await emailService.sendRegistrationSuccessEmail(user);
+    } else if (user.role === "visitor") {
+      await emailService.sendVisitorRegistrationSuccessEmail({ ...user, password: req.body.password });
+    }
     
     const jwtToken = generateToken(user._id);
 
