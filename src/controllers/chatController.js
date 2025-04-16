@@ -3,6 +3,7 @@ const Conversation = require('../models/conversation');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 const { ObjectId } = mongoose.Types;
+const emailService = require('../services/emailService');
 
 // Get all conversations for the current user
 exports.getConversations = async (req, res) => {
@@ -241,8 +242,18 @@ exports.sendMessage = async (req, res) => {
     // Populate sender details for response
     const populatedMessage = await Message.findById(message._id).populate({
       path: 'sender',
-      select: 'name username profilePhoto'
+      select: 'name username profilePhoto email'
+    }).populate({
+      path: 'recipient',
+      select: 'name username profilePhoto email'
     });
+
+    // Send email to recipient
+    try {
+      await emailService.sendMessageEmail(populatedMessage);
+    } catch (error) {
+      console.log(error);
+    }
 
     res.status(201).json({
       success: true,

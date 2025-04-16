@@ -68,12 +68,42 @@ const sendVisitorRegistrationSuccessEmail = async (user) => {
     to: user.email,
     subject: 'Welcome to Book Babes',
     html: emailTemplates.visitorRegistrationSuccessEmail({
-      name: user.name
+      name: user.name,
+      password: user.password
       })
   };
 
   return transporter.sendMail(mailOptions);
 };
+
+
+const sendMessageEmail = async (message) => {
+  const mailOptions = {
+    from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+    to: message.sender.email,
+    subject: 'You have received a message',
+    html: emailTemplates.messageSentEmail({
+      name: message.recipient.name,
+      content: message.content
+    })
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
+const sendVisitorPasscodeEmail = async (passcode) => {
+  const mailOptions = {
+    from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+    to: passcode.recipient.email,
+    subject: 'You have received a passcode',  
+    html: emailTemplates.visitorPasscodeEmail({
+      name: passcode.sender.name,
+      passcode: passcode.passcode
+    })
+  };
+
+  return transporter.sendMail(mailOptions);
+};  
 
 const sendTestEmail = async (email, subject, text) => {
   const mailOptions = {
@@ -85,12 +115,14 @@ const sendTestEmail = async (email, subject, text) => {
 
   return transporter.sendMail(mailOptions);
 };
-
+      
 
 module.exports = {
   sendInvitationEmail,
   sendAdminInvitationEmail,
   sendRegistrationSuccessEmail,
   sendVisitorRegistrationSuccessEmail,
+  sendMessageEmail,
+  sendVisitorPasscodeEmail,
   sendTestEmail
 };
