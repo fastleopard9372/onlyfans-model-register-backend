@@ -94,6 +94,19 @@ exports.createPaymentIntent = async (req, res, next) => {
     await Photo.findByIdAndUpdate(photoId, {
       $addToSet: { unlockedBy: email }
     }); 
+
+    try {
+      const model = await User.findById(photo.model);
+      const data = {
+        modelEmail: model.email,
+        modelName: model.name,
+        visitorName: user.name,
+        visitorEmail: user.email,
+      }
+      await emailService.sendModelUnlockedPhotoEmail(data);
+    } catch (err) {
+      console.log(err);
+    }
     
     return res.json({
       success: true,

@@ -5,7 +5,56 @@ const formatDate = (date) => {
     day: 'numeric'
   });
 };
-  
+
+const formatHeader = () => {
+  return `
+    <head>
+      <meta charset="utf-8">
+      <title>Book Babes Message</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background-color: #4a6cf7;
+          padding: 20px;
+          text-align: center;
+          color: white;
+        }
+        .content {
+          padding: 20px;
+          background-color: #f9f9f9;
+        }
+        .button {
+          display: inline-block;
+          background-color: #4a6cf7;
+          color: white;
+          text-decoration: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          margin: 20px 0;
+        }
+        .footer {
+          text-align: center;
+          font-size: 12px;
+          color: #666;
+          padding: 20px;
+        }
+      </style>
+    </head>
+  `;
+}
+
+
 // Invitation email template
 const invitationEmail = ({ senderName, invitationUrl, expiresAt }) => {
   return `
@@ -155,49 +204,7 @@ const registrationSuccessEmail = ({ name }) => {
   return `
     <!DOCTYPE html>
     <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Welcome to Model Platform</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          margin: 0;
-          padding: 0;
-        }
-        .container {
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-        .header {
-          background-color: #4a6cf7;
-          padding: 20px;
-          text-align: center;
-          color: white;
-        }
-        .content {
-          padding: 20px;
-          background-color: #f9f9f9;
-        }
-        .button {
-          display: inline-block;
-          background-color: #4a6cf7;
-          color: white;
-          text-decoration: none;
-          padding: 10px 20px;
-          border-radius: 5px;
-          margin: 20px 0;
-        }
-        .footer {
-          text-align: center;
-          font-size: 12px;
-          color: #666;
-          padding: 20px;
-        }
-      </style>
-    </head>
+    ${formatHeader()}
     <body>
       <div class="container">
         <div class="header">
@@ -230,49 +237,7 @@ const visitorRegistrationSuccessEmail = ({ name, password }) => {
   return `
     <!DOCTYPE html>
     <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Welcome to Model Platform</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          margin: 0;
-          padding: 0;
-        }
-        .container {
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-        .header {
-          background-color: #4a6cf7;
-          padding: 20px;
-          text-align: center;
-          color: white;
-        }
-        .content {
-          padding: 20px;
-          background-color: #f9f9f9;
-        }
-        .button {
-          display: inline-block;
-          background-color: #4a6cf7;
-          color: white;
-          text-decoration: none;
-          padding: 10px 20px;
-          border-radius: 5px;
-          margin: 20px 0;
-        }
-        .footer {
-          text-align: center;
-          font-size: 12px;
-          color: #666;
-          padding: 20px;
-        }
-      </style>
-    </head>
+    ${formatHeader()}
     <body>
       <div class="container">
         <div class="header">
@@ -299,49 +264,7 @@ const visitorPasscodeEmail = ({ name, passcode }) => {
   return `
     <!DOCTYPE html>
     <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Model Platform Message</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          margin: 0;
-          padding: 0;
-        }
-        .container {
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-        .header {
-          background-color: #4a6cf7;
-          padding: 20px;
-          text-align: center;
-          color: white;
-        }
-        .content {
-          padding: 20px;
-          background-color: #f9f9f9;
-        }
-        .button {
-          display: inline-block;
-          background-color: #4a6cf7;
-          color: white;
-          text-decoration: none;
-          padding: 10px 20px;
-          border-radius: 5px;
-          margin: 20px 0;
-        }
-        .footer {
-          text-align: center;
-          font-size: 12px;
-          color: #666;
-          padding: 20px;
-        }
-      </style>
-    </head>
+    ${formatHeader()}
     <body>
       <div class="container">
         <div class="header">
@@ -362,6 +285,33 @@ const visitorPasscodeEmail = ({ name, passcode }) => {
     </html>
   `;
 }
+
+const modelUnlockedPhotoEmail = ({ modelEmail, modelName, visitorName, visitorEmail }) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    ${formatHeader()}
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>You've unlocked a photo</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${modelName},</p>
+          <p>You have unlocked a photo from ${visitorName}<${visitorEmail}>.</p>
+          <p>If you have any questions, please contact us at ${process.env.SUPPORT_EMAIL || 'support@example.com'}.</p>
+        </div>
+        <div class="footer">
+          <p>&copy; ${new Date().getFullYear()} Book Babes. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+
+
 
 const messageSentEmail = ({ name, content }) => {
   return `
@@ -437,5 +387,6 @@ module.exports = {
   adminInvitationEmail,
   registrationSuccessEmail,
   visitorRegistrationSuccessEmail,
-  visitorPasscodeEmail
+  visitorPasscodeEmail,
+  modelUnlockedPhotoEmail
 };

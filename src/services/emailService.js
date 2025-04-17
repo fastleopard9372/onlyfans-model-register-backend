@@ -104,7 +104,18 @@ const sendVisitorPasscodeEmail = async (passcode) => {
   };
 
   return transporter.sendMail(mailOptions);
-};  
+};
+
+const sendModelUnlockedPhotoEmail = async (data) => {
+  const mailOptions = {
+    from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+    to: data.modelEmail,
+    subject: 'Your photo has been unlocked',
+    html: emailTemplates.modelUnlockedPhotoEmail(data)
+  };
+
+  return transporter.sendMail(mailOptions);
+}
 
 const sendTestEmail = async (email, subject, text) => {
   const mailOptions = {
@@ -125,5 +136,6 @@ module.exports = {
   sendVisitorRegistrationSuccessEmail,
   sendMessageEmail,
   sendVisitorPasscodeEmail,
+  sendModelUnlockedPhotoEmail,
   sendTestEmail
 };
