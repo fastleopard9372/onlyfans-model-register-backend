@@ -247,7 +247,6 @@ exports.sendMessage = async (req, res) => {
       path: 'recipient',
       select: 'name username profilePhoto email'
     });
-
     // Send email to recipient
     try {
       await emailService.sendMessageEmail(populatedMessage);

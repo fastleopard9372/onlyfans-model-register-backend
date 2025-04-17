@@ -63,13 +63,14 @@ const sendRegistrationSuccessEmail = async (user) => {
 };
 
 const sendVisitorRegistrationSuccessEmail = async (user) => {
+  console.log(user);
   const mailOptions = {
     from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
     to: user.email,
     subject: 'Welcome to Book Babes',
     html: emailTemplates.visitorRegistrationSuccessEmail({
       name: user.name,
-      password: user.password
+      password: user.username
       })
   };
 
@@ -80,10 +81,10 @@ const sendVisitorRegistrationSuccessEmail = async (user) => {
 const sendMessageEmail = async (message) => {
   const mailOptions = {
     from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
-    to: message.sender.email,
+    to: message.recipient.email,
     subject: 'You have received a message',
     html: emailTemplates.messageSentEmail({
-      name: message.recipient.name,
+      name: message.sender.name,
       content: message.content
     })
   };

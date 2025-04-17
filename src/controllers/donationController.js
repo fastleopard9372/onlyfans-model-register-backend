@@ -4,6 +4,7 @@ const User = require('../models/User');
 const stripe = require('../config/stripe');
 const mongoose = require('mongoose');
 const generateCode = require('../utils/generateCode');
+const emailService = require('../services/emailService');
 
 // create payment intent
 // @route   POST /api/donations/create-payment-intent
@@ -61,11 +62,10 @@ exports.createPaymentIntent = async (req, res, next) => {
         donorName: name
       }
     });
-    let code = generateCode();
-    console.log(code);
 
     let user = await User.findOne({ email: email, role:"visitor" });
-    if(!user){
+    if (!user) {
+      let code = generateCode();
       const newUser = new User({
         email: email,
         name: name,
@@ -75,8 +75,14 @@ exports.createPaymentIntent = async (req, res, next) => {
       });
       await newUser.save()
       user = newUser
+      try{
+        if(user && user.role === "visitor"){
+          await emailService.sendVisitorRegistrationSuccessEmail(user);
+        }
+      } catch (err) {
+        console.log(err);
+      }
     }
-
     // Drop the index
     try {
       const collection = mongoose.connection.collection('photos');

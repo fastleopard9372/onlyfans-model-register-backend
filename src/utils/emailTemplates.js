@@ -283,7 +283,7 @@ const visitorRegistrationSuccessEmail = ({ name, password }) => {
           <p>Thank you for registering with Book Babes! Your account has been successfully created.</p>
           <p>You can now start browsing the platform and discover your favorite models.</p>
           <p>Your password is:</p>
-          <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 18px;">${password}</div>
+          <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 16px;">${password}</div>
           <p>If you have any questions, please contact us at ${process.env.SUPPORT_EMAIL || 'support@example.com'}.</p>
         </div>
         <div class="footer">
@@ -350,8 +350,8 @@ const visitorPasscodeEmail = ({ name, passcode }) => {
         <div class="content">
           <p>Hello,</p>
           <p>You have unlocked a photo from ${name}.</p>
-          <p>You login with the following passcode:</p>
-          <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 18px;">${passcode}</div>
+          <p>You can login with the following passcode:</p>
+          <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 16px;">${passcode}</div>
           <p>If you have any questions, please contact us at ${process.env.SUPPORT_EMAIL || 'support@example.com'}.</p>
         </div>
         <div class="footer">
@@ -419,7 +419,7 @@ const messageSentEmail = ({ name, content }) => {
           <p>Hello,</p>
           <p>You have received a message from ${name}.</p>
           <p>The message is:</p>
-          <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 18px;">${content}</div>
+          <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 16px;">${content}</div>
           <p>If you have any questions, please contact us at ${process.env.SUPPORT_EMAIL || 'support@example.com'}.</p>
         </div>
         <div class="footer">
